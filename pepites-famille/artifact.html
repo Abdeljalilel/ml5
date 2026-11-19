@@ -131,6 +131,16 @@
   .actions button.mine { background: #fde3dc; border-color: var(--rose); }
   .actions .merci { margin-left: auto; background: var(--encre); color: var(--creme); border-color: var(--encre); font-weight: 500; }
   .actions .merci.done { background: #3d8a68; border-color: #3d8a68; }
+  .coms { margin-top: 14px; padding-top: 12px; border-top: 1px dashed #e8dccb; }
+  .com { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 10px; }
+  .com .mini { flex: 0 0 auto; margin: 2px 0 0; }
+  .com .bulle { background: #f6ecdc; border-radius: 4px 14px 14px 14px; padding: 7px 12px; font-size: .93rem; line-height: 1.4; overflow-wrap: anywhere; white-space: pre-wrap; }
+  .com .bulle b { font-size: .84rem; }
+  .com .quand { color: var(--doux); font-size: .74rem; margin-left: 4px; }
+  .com .delcom { border: 0; background: none; color: var(--doux); font-size: .72rem; cursor: pointer; padding: 2px 4px; }
+  .com-form { display: flex; gap: 6px; margin-top: 4px; }
+  .com-form input { flex: 1; padding: 9px 12px; border-radius: 999px; font-size: .92rem; }
+  .com-form button { border: 0; border-radius: 999px; padding: 0 14px; background: var(--encre); color: var(--creme); font: inherit; font-size: .88rem; cursor: pointer; }
   .actions .del { margin-left: auto; border: 0; background: none; color: var(--doux); font-size: .82rem; }
 
   .vide { text-align: center; padding: 36px 16px; font-family: "Fraunces", serif; font-style: italic; font-size: 1.1rem; opacity: .9; text-shadow: 0 2px 12px rgba(0,0,0,.4); }
@@ -296,7 +306,7 @@ const CATALOGUE = {
 const S = {
   enLigne: new Set(),
   db: null, user: null, uid: null, canWrite: true,
-  pepites: [], actions: {}, noms: {},
+  pepites: [], actions: {}, noms: {}, commentaires: [], brouillons: {},
   charge: false, lent: false, erreur: null, onglet: "decouvrir",
 };
 const $ = (s) => document.querySelector(s);
@@ -452,7 +462,24 @@ function carte(p) {
     ${lien ? `<a class="lien" href="${esc(lien)}" target="_blank" rel="noopener">🔗 ${esc(new URL(lien).hostname.replace(/^www\./, ""))}</a>` : ""}
     <div class="sign">${avatar(p.auteur, "mini")}<b>${esc(nom(p.auteur))}</b>${quand ? ", le " + quand : ""}${qui.length ? ` · appris par ${esc(qui.map(nom).join(", "))}` : ""}</div>
     <div class="actions">${reacts}${fin}</div>
+    ${blocCommentaires(p)}
   </article>`;
+}
+
+function blocCommentaires(p) {
+  const coms = S.commentaires.filter((c) => c.pid === p.id);
+  if (!coms.length && !S.canWrite) return "";
+  const liste = coms.map((c) => {
+    const quand = c.date ? new Date(c.date).toLocaleString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "";
+    return `<div class="com">${avatar(c.auteur, "mini")}<div>
+      <div class="bulle"><b>${esc(nom(c.auteur))}</b><span class="quand">${esc(quand)}</span><br>${avecLiens(c.texte)}</div>
+      ${c.auteur === S.uid && S.canWrite ? `<button class="delcom" data-delcom="${esc(c.id)}">Supprimer</button>` : ""}
+    </div></div>`;
+  }).join("");
+  const form = S.canWrite ? `<form class="com-form" data-pid="${esc(p.id)}">
+      <input data-com="${esc(p.id)}" maxlength="500" placeholder="💬 Écrire un commentaire…" value="${esc(S.brouillons[p.id] || "")}" autocomplete="off" />
+      <button>Envoyer</button></form>` : "";
+  return `<div class="coms">${liste}${form}</div>`;
 }
 
 function render() {
@@ -466,6 +493,8 @@ function render() {
     ? `<div class="note">Tu peux lire le fil, mais pas encore écrire. Demande à la personne qui t'a envoyé le lien de t'inviter par e-mail comme <b>Éditeur</b>.</div>` : "";
 
   const liste = $("#liste");
+  const actif = document.activeElement?.dataset?.com;
+  const curseur = actif ? document.activeElement.selectionStart : null;
   if (S.erreur) { liste.innerHTML = `<div class="vide">${esc(S.erreur)}</div>`; return; }
   if (!S.charge) { liste.innerHTML = `<div class="vide">${S.lent ? "Le fil met du temps à arriver… vérifie ta connexion." : "Chargement…"}</div>`; return; }
 
@@ -485,7 +514,29 @@ function render() {
   } else {
     liste.innerHTML = S.pepites.length ? S.pepites.map(carte).join("") : `<div class="vide">Le trésor est encore vide ✦</div>`;
   }
+  if (actif) {
+    const el = [...liste.querySelectorAll("[data-com]")].find((x) => x.dataset.com === actif);
+    if (el) { el.focus({ preventScroll: true }); try { el.setSelectionRange(curseur, curseur); } catch {} }
+  }
 }
+
+// ---------- Commentaires ----------
+document.addEventListener("input", (e) => { const id = e.target.dataset?.com; if (id) S.brouillons[id] = e.target.value; });
+document.addEventListener("submit", async (e) => {
+  const f = e.target.closest?.(".com-form"); if (!f) return;
+  e.preventDefault();
+  const pid = f.dataset.pid, input = f.querySelector("input");
+  const texte = input.value.trim().slice(0, 500);
+  if (!texte || !S.db || !S.uid) return;
+  input.value = ""; S.brouillons[pid] = "";
+  try {
+    await S.db.collection("commentaires").add({ pid, texte, auteur: S.uid, date: new Date().toISOString() });
+  } catch (err) {
+    S.brouillons[pid] = texte; render();
+    if (err?.code === "invalid_argument") { S.canWrite = false; render(); }
+    else toast("Pas pu envoyer le commentaire, réessaie.");
+  }
+});
 
 // ---------- Actions ----------
 $("#ecrire").onsubmit = async (e) => {
@@ -636,6 +687,11 @@ document.addEventListener("click", async (e) => {
     const id = t.dataset.learn;
     ecrireMoi((m) => { if (m.appris[id]) delete m.appris[id]; else m.appris[id] = jourLocal(); });
   }
+  if (t.dataset.delcom) {
+    if (t.dataset.confirm) {
+      try { await S.db.doc("commentaires/" + t.dataset.delcom).delete(); } catch { toast("Pas pu supprimer."); }
+    } else { t.dataset.confirm = "1"; t.textContent = "Confirmer ?"; }
+  }
   if (t.dataset.del) {
     if (t.dataset.confirm) {
       try { await S.db.doc("pepites/" + t.dataset.del).delete(); toast("Pépite supprimée"); } catch { toast("Pas pu supprimer."); }
@@ -675,6 +731,12 @@ document.addEventListener("click", async (e) => {
     if (!snap.metadata.fromCache) okP = true;
     pret();
   }, () => { clearTimeout(timer); S.erreur = "Impossible de charger le fil."; render(); });
+  db.collection("commentaires").orderBy("date", "asc").onSnapshot((snap) => {
+    S.commentaires = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+      .filter((c) => typeof c.texte === "string" && typeof c.pid === "string")
+      .sort((a, b) => String(a.date).localeCompare(String(b.date)));
+    render();
+  }, () => {});
   db.collection("actions").onSnapshot((snap) => {
     const a = {}; snap.docs.forEach((d) => (a[d.id] = d.data())); S.actions = a;
     if (!snap.metadata.fromCache) okA = true;
