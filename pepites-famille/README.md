@@ -3,6 +3,15 @@
 Une mini-appli pour apprendre chaque jour quelque chose de ses proches :
 culture G, expérience de vie, bons plans, finance…
 
+## Version en ligne
+
+`artifact.html` est la version web partageable, hébergée sur claude.ai avec une
+base de données partagée (chaque personne a sa propre série, ses réactions et
+ce qu'elle a appris). C'est la version à utiliser en premier.
+
+`server.js` + `public/` est une version locale (Node) qu'on peut garder pour
+plus tard, par exemple pour un hébergement indépendant.
+
 ## Ce que fait la v0
 
 - **Aujourd'hui** : chaque jour, 3 pépites partagées par les autres membres de la famille, que tu n'as pas encore apprises. Tu cliques sur « J'ai appris ! » et tu gagnes une série 🔥 de jours consécutifs.

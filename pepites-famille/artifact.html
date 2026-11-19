@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pépites de Famille</title>
+<style>
+  :root {
+    --bg: #fbf7f1; --card: #fff; --ink: #2b2420; --muted: #7d7269; --line: #ece4da;
+    --accent: #c8701f; --accent-soft: #fbe9d6; --ok: #2b8a5e;
+    --culture: #3b78b5; --experience: #8a4fa6; --bonplan: #2b8a5e; --finance: #a8871a; --autre: #7d7269;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--ink); }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 0 18px; }
+  header { padding-top: 20px; }
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  h1 { margin: 0; font-size: 1.45rem; }
+  .sub { color: var(--muted); margin: 4px 0 0; font-size: .95rem; }
+  .moi { font-size: .85rem; color: var(--muted); background: none; border: 1px solid var(--line); border-radius: 999px; padding: 5px 10px; cursor: pointer; white-space: nowrap; }
+  nav { display: flex; gap: 6px; margin-top: 14px; }
+  nav button { flex: 1; padding: 10px 6px; border: 1px solid var(--line); background: var(--card); border-radius: 10px; font-size: .95rem; cursor: pointer; color: var(--ink); }
+  nav button.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+  main { padding-top: 16px; padding-bottom: 60px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin-bottom: 14px; }
+  .tag { display: inline-block; font-size: .75rem; font-weight: 600; padding: 3px 8px; border-radius: 999px; color: #fff; }
+  .card h3 { margin: 10px 0 6px; font-size: 1.1rem; }
+  .card p { margin: 0; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .meta { color: var(--muted); font-size: .8rem; margin-top: 10px; }
+  .actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; align-items: center; }
+  .actions button { border: 1px solid var(--line); background: var(--bg); border-radius: 999px; padding: 6px 10px; cursor: pointer; font-size: .9rem; color: var(--ink); }
+  .actions button.mine { background: var(--accent-soft); border-color: var(--accent); }
+  .actions .learn { margin-left: auto; background: var(--accent); color: #fff; border-color: var(--accent); }
+  .actions .learn.done { background: var(--ok); border-color: var(--ok); }
+  .actions .del { background: none; border: 0; color: var(--muted); font-size: .8rem; margin-left: auto; }
+  .hero { background: var(--accent-soft); border-radius: 14px; padding: 14px 16px; margin-bottom: 16px; line-height: 1.5; }
+  .note { background: #fff; border: 1px dashed var(--line); border-radius: 12px; padding: 10px 14px; color: var(--muted); font-size: .88rem; margin-bottom: 14px; }
+  .empty { text-align: center; color: var(--muted); padding: 30px 10px; }
+  label { display: block; font-weight: 600; margin: 12px 0 6px; font-size: .9rem; }
+  input, textarea, select { width: 100%; padding: 10px; border: 1px solid var(--line); border-radius: 10px; font: inherit; background: #fff; color: var(--ink); }
+  textarea { min-height: 120px; resize: vertical; }
+  .primary { margin-top: 16px; width: 100%; padding: 12px; border: 0; border-radius: 10px; background: var(--accent); color: #fff; font-size: 1rem; font-weight: 600; cursor: pointer; }
+  .primary:disabled { opacity: .5; cursor: default; }
+  .filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+  .filters button { border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: 5px 10px; cursor: pointer; font-size: .85rem; color: var(--ink); }
+  .filters button.on { background: var(--ink); color: #fff; }
+  .modal { position: fixed; inset: 0; background: rgba(0,0,0,.4); display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .modal .card { width: 100%; max-width: 380px; }
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 10px 16px; border-radius: 999px; font-size: .9rem; z-index: 10; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="top">
+      <h1>✨ Pépites de Famille</h1>
+      <button class="moi" id="moi" hidden></button>
+    </div>
+    <p class="sub">Chaque jour, on apprend quelque chose les uns des autres.</p>
+    <nav>
+      <button data-tab="jour" class="on">☀️ Aujourd'hui</button>
+      <button data-tab="partager">✍️ Partager</button>
+      <button data-tab="tout">📚 Tout</button>
+    </nav>
+  </header>
+  <main id="app"><div class="empty">Chargement des pépites…</div></main>
+</div>
+
+<script>
+const CATS = {
+  culture:    { label: "Culture G",         emoji: "🌍" },
+  experience: { label: "Expérience de vie", emoji: "🧭" },
+  bonplan:    { label: "Bon plan",          emoji: "💡" },
+  finance:    { label: "Finance",           emoji: "💰" },
+  autre:      { label: "Autre",             emoji: "🎁" },
+};
+const EMOJIS = ["❤️", "🤯", "😂", "🙏"];
+const PAR_JOUR = 3; // nombre de pépites à découvrir chaque jour
+
+const S = {
+  db: null, user: null, uid: null, canWrite: true,
+  pepites: [],          // [{id, titre, contenu, categorie, auteur, date}]
+  actions: {},          // uid -> {surnom, appris:{pid:date}, reactions:{pid:[emoji]}, jour:{date, ids}}
+  noms: {},             // uid -> nom (profil Claude)
+  chargeP: false, chargeA: false, lent: false, erreur: null,
+  onglet: "jour", filtre: null,
+};
+
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const jourLocal = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+function hash(s) { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) | 0; return h; }
+function toast(msg) {
+  const t = document.createElement("div"); t.className = "toast"; t.textContent = msg;
+  document.body.appendChild(t); setTimeout(() => t.remove(), 2400);
+}
+
+// ---------- Noms ----------
+function nom(uid) {
+  if (uid === "exemple") return "Exemple";
+  return S.actions[uid]?.surnom || S.noms[uid] || "Quelqu'un";
+}
+let nomsEnCours = false;
+async function resoudreNoms() {
+  if (!S.user || nomsEnCours) return;
+  const ids = [...new Set([...S.pepites.map((p) => p.auteur), ...Object.keys(S.actions)])]
+    .filter((id) => id && id !== "exemple" && !(id in S.noms));
+  if (!ids.length) return;
+  nomsEnCours = true;
+  try {
+    const ps = await S.user.profiles(ids);
+    ids.forEach((id) => (S.noms[id] = ps?.[id]?.name || ""));
+  } catch { ids.forEach((id) => (S.noms[id] = "")); }
+  nomsEnCours = false;
+  render();
+}
+
+// ---------- Mon état (un document par personne : actions/<uid>) ----------
+const moi = () => S.actions[S.uid] || {};
+let fileEcriture = Promise.resolve();
+function ecrireMoi(modif) {
+  if (!S.db || !S.uid) return;
+  const base = JSON.parse(JSON.stringify(moi()));
+  const nouveau = { surnom: "", appris: {}, reactions: {}, ...base };
+  modif(nouveau);
+  S.actions = { ...S.actions, [S.uid]: nouveau }; // affichage immédiat
+  render();
+  fileEcriture = fileEcriture.then(() => S.db.doc("actions/" + S.uid).set(nouveau)).catch((e) => {
+    if (e?.code === "invalid_argument") { S.canWrite = false; render(); toast("Tu n'as pas les droits pour écrire ici."); }
+    else toast("Pas pu enregistrer, réessaie.");
+  });
+}
+
+// ---------- Sélection du jour ----------
+function selectionDuJour() {
+  const m = moi(), today = jourLocal();
+  if (m.jour?.date === today) return m.jour.ids.map((id) => S.pepites.find((p) => p.id === id)).filter(Boolean);
+  return S.pepites
+    .filter((p) => p.auteur !== S.uid && !(m.appris || {})[p.id])
+    .sort((a, b) => hash(a.id + S.uid + today) - hash(b.id + S.uid + today))
+    .slice(0, PAR_JOUR);
+}
+// Fige la sélection du jour une fois les données confirmées (évite qu'elle bouge dans la journée)
+function figerJour() {
+  if (!S.uid || !S.canWrite || !S.chargeP || !S.chargeA) return;
+  const today = jourLocal();
+  if (moi().jour?.date === today) return;
+  const ids = selectionDuJour().map((p) => p.id);
+  if (!ids.length) return;
+  ecrireMoi((m) => (m.jour = { date: today, ids }));
+}
+
+function serie() {
+  const jours = new Set(Object.values(moi().appris || {}));
+  const d = new Date(); let n = 0;
+  if (!jours.has(jourLocal(d))) d.setDate(d.getDate() - 1);
+  while (jours.has(jourLocal(d))) { n++; d.setDate(d.getDate() - 1); }
+  return n;
+}
+const apprisPar = (pid) => Object.entries(S.actions).filter(([, a]) => a.appris?.[pid]).map(([u]) => u);
+const reactionsDe = (pid, e) => Object.entries(S.actions).filter(([, a]) => (a.reactions?.[pid] || []).includes(e)).map(([u]) => u);
+
+// ---------- Affichage ----------
+function carte(p) {
+  const c = CATS[p.categorie] || CATS.autre;
+  const appris = !!moi().appris?.[p.id];
+  const reacts = EMOJIS.map((e) => {
+    const l = reactionsDe(p.id, e);
+    return `<button data-react="${e}" data-id="${esc(p.id)}" class="${l.includes(S.uid) ? "mine" : ""}" title="${esc(l.map(nom).join(", "))}" ${S.canWrite ? "" : "disabled"}>${e} ${l.length || ""}</button>`;
+  }).join("");
+  const qui = apprisPar(p.id);
+  const date = p.date ? new Date(p.date).toLocaleDateString("fr-FR") : "";
+  let fin = "";
+  if (p.auteur === S.uid) fin = S.canWrite ? `<button class="del" data-del="${esc(p.id)}">Supprimer</button>` : "";
+  else if (S.canWrite) fin = `<button class="learn ${appris ? "done" : ""}" data-learn="${esc(p.id)}">${appris ? "✓ Appris" : "J'ai appris !"}</button>`;
+  return `<div class="card">
+    <span class="tag" style="background:var(--${CATS[p.categorie] ? p.categorie : "autre"})">${c.emoji} ${c.label}</span>
+    <h3>${esc(p.titre)}</h3>
+    <p>${esc(p.contenu)}</p>
+    <div class="meta">Partagé par <b>${esc(nom(p.auteur))}</b>${date ? " · " + date : ""}${qui.length ? " · appris par " + esc(qui.map(nom).join(", ")) : ""}</div>
+    <div class="actions">${reacts}${fin}</div>
+  </div>`;
+}
+
+function render() {
+  document.querySelectorAll("nav button").forEach((b) => b.classList.toggle("on", b.dataset.tab === S.onglet));
+  const btnMoi = $("#moi");
+  btnMoi.hidden = !S.uid;
+  btnMoi.textContent = "👤 " + (S.uid ? nom(S.uid) : "");
+  const app = $("#app");
+
+  if (S.erreur) { app.innerHTML = `<div class="empty">${esc(S.erreur)}</div>`; return; }
+  if (!S.chargeP) {
+    app.innerHTML = `<div class="empty">${S.lent ? "Les pépites mettent du temps à arriver… vérifie ta connexion." : "Chargement des pépites…"}</div>`;
+    return;
+  }
+  const lecture = S.canWrite ? "" : `<div class="note">Tu peux lire les pépites, mais pas encore en ajouter. Demande à la personne qui t'a envoyé le lien de t'inviter par e-mail comme <b>Éditeur</b>.</div>`;
+
+  if (S.onglet === "jour") {
+    const liste = selectionDuJour();
+    const faites = liste.filter((p) => moi().appris?.[p.id]).length;
+    const s = serie();
+    app.innerHTML = lecture + `<div class="hero"><b>Bonjour ${esc(nom(S.uid))} 👋</b><br>
+        ${liste.length ? `${faites} / ${liste.length} pépites découvertes aujourd'hui` : "Tu as tout découvert !"}
+        ${s ? ` · 🔥 ${s} jour${s > 1 ? "s" : ""} d'affilée` : ""}</div>` +
+      (liste.length ? liste.map(carte).join("")
+        : `<div class="empty">Plus rien de nouveau pour l'instant.<br>C'est le moment de <b>partager une pépite</b> à ta famille ✍️</div>`);
+  }
+
+  if (S.onglet === "partager") {
+    if (!S.canWrite) { app.innerHTML = lecture; return; }
+    if (!$("#f-titre")) {
+      app.innerHTML = `<form class="card" id="f">
+        <label for="f-cat">Catégorie</label>
+        <select id="f-cat">${Object.entries(CATS).map(([k, c]) => `<option value="${k}">${c.emoji} ${c.label}</option>`).join("")}</select>
+        <label for="f-titre">Titre</label>
+        <input id="f-titre" maxlength="120" required placeholder="Ex : Toujours négocier son premier salaire" />
+        <label for="f-contenu">Ta pépite</label>
+        <textarea id="f-contenu" maxlength="2000" required placeholder="Raconte ce que tu as appris, vécu, ou ton bon plan…"></textarea>
+        <button class="primary" id="f-envoyer">Partager avec la famille</button>
+      </form>`;
+      $("#f").onsubmit = partager;
+    }
+  }
+
+  if (S.onglet === "tout") {
+    const liste = S.pepites.filter((p) => !S.filtre || p.categorie === S.filtre);
+    app.innerHTML = lecture + `<div class="filters">
+        <button class="${!S.filtre ? "on" : ""}" data-filtre="">Tout (${S.pepites.length})</button>
+        ${Object.entries(CATS).map(([k, c]) => `<button class="${S.filtre === k ? "on" : ""}" data-filtre="${k}">${c.emoji} ${c.label}</button>`).join("")}
+      </div>` + (liste.length ? liste.map(carte).join("") : `<div class="empty">Rien ici pour l'instant.</div>`);
+  }
+}
+
+async function partager(e) {
+  e.preventDefault();
+  const titre = $("#f-titre").value.trim(), contenu = $("#f-contenu").value.trim();
+  if (!titre || !contenu) return;
+  const btn = $("#f-envoyer"); btn.disabled = true;
+  try {
+    await S.db.collection("pepites").add({
+      titre: titre.slice(0, 120), contenu: contenu.slice(0, 2000),
+      categorie: $("#f-cat").value, auteur: S.uid, date: new Date().toISOString(),
+    });
+    toast("Pépite partagée 🎉");
+    S.onglet = "tout"; S.filtre = null; render();
+  } catch (err) {
+    btn.disabled = false;
+    if (err?.code === "invalid_argument") { S.canWrite = false; render(); }
+    else toast(err?.code === "quota_exceeded" ? "La boîte à pépites est pleine." : "Pas pu partager, réessaie.");
+  }
+}
+
+function demanderSurnom() {
+  const m = document.createElement("div");
+  m.className = "modal";
+  m.innerHTML = `<form class="card"><h3>Comment la famille t'appelle ? 🙂</h3>
+    <p style="color:var(--muted)">Ce nom sera affiché sur tes pépites (ex : Maman, Papa, Sarah…).</p>
+    <input id="m-nom" maxlength="40" placeholder="Ton surnom" />
+    <button class="primary">C'est parti</button>
+    <button type="button" id="m-annuler" style="margin-top:8px;width:100%;background:none;border:0;color:var(--muted);cursor:pointer">Annuler</button></form>`;
+  document.body.appendChild(m);
+  const input = $("#m-nom"); input.value = moi().surnom || ""; input.focus();
+  $("#m-annuler").onclick = () => m.remove();
+  m.querySelector("form").onsubmit = (e) => {
+    e.preventDefault();
+    const v = input.value.trim().slice(0, 40);
+    if (v && v !== moi().surnom) ecrireMoi((x) => (x.surnom = v));
+    m.remove();
+  };
+}
+
+document.addEventListener("click", async (e) => {
+  const t = e.target.closest("button"); if (!t) return;
+  if (t.dataset.tab) { S.onglet = t.dataset.tab; $("#app").innerHTML = ""; render(); }
+  if (t.dataset.filtre !== undefined) { S.filtre = t.dataset.filtre || null; render(); }
+  if (t.id === "moi" && S.canWrite) demanderSurnom();
+  if (t.dataset.react) {
+    const { id, react } = t.dataset;
+    ecrireMoi((m) => {
+      const l = m.reactions[id] || [];
+      m.reactions[id] = l.includes(react) ? l.filter((x) => x !== react) : [...l, react];
+    });
+  }
+  if (t.dataset.learn) {
+    const id = t.dataset.learn;
+    ecrireMoi((m) => { if (m.appris[id]) delete m.appris[id]; else m.appris[id] = jourLocal(); });
+  }
+  if (t.dataset.del) {
+    if (t.dataset.confirm) {
+      try { await S.db.doc("pepites/" + t.dataset.del).delete(); toast("Pépite supprimée"); }
+      catch { toast("Pas pu supprimer."); }
+    } else { t.dataset.confirm = "1"; t.textContent = "Confirmer la suppression ?"; }
+  }
+});
+
+// ---------- Démarrage ----------
+(async () => {
+  render();
+  const [db, user] = await Promise.all([claude.use("db"), claude.use("user")]);
+  if (!db) { S.erreur = "Connecte-toi à ton compte Claude pour voir les pépites de la famille."; render(); return; }
+  S.db = db; S.user = user;
+  if (user) {
+    S.uid = await user.id();
+    const peut = await user.can("data.write");
+    if (peut === false) S.canWrite = false;
+  }
+  if (!S.uid) S.canWrite = false;
+
+  const timer = setTimeout(() => { S.lent = true; render(); }, 10000);
+  db.collection("pepites").orderBy("date", "desc").onSnapshot((snap) => {
+    S.pepites = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    if (!snap.metadata.fromCache) { S.chargeP = true; clearTimeout(timer); }
+    else if (snap.size) S.chargeP = true;
+    render(); resoudreNoms(); figerJour();
+  }, (err) => { clearTimeout(timer); S.erreur = "Impossible de charger les pépites."; render(); });
+
+  db.collection("actions").onSnapshot((snap) => {
+    const a = {};
+    snap.docs.forEach((d) => (a[d.id] = d.data()));
+    S.actions = a;
+    if (!snap.metadata.fromCache) S.chargeA = true;
+    render(); resoudreNoms(); figerJour();
+    if (S.chargeA && S.canWrite && S.uid && !moi().surnom && !sessionStorageGet("surnom-demande")) {
+      sessionStorageSet("surnom-demande"); demanderSurnom();
+    }
+  }, () => {});
+})();
+
+function sessionStorageGet(k) { try { return sessionStorage.getItem(k); } catch { return null; } }
+function sessionStorageSet(k) { try { sessionStorage.setItem(k, "1"); } catch {} }
+</script>
+</body>
+</html>
