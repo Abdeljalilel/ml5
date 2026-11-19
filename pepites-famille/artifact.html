@@ -120,6 +120,9 @@
   .bandeau button { border: 0; background: none; color: inherit; cursor: pointer; font: inherit; }
   .bandeau .go { background: var(--creme); color: var(--encre); border-radius: 999px; padding: 7px 12px; font-weight: 700; font-size: .85rem; white-space: nowrap; }
   .bandeau .x { opacity: .7; font-size: 1.1rem; padding: 0 4px; }
+  .entete { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; padding-right: 70px; }
+  .entete .ruban { margin-bottom: 0; }
+  .date-carte { font-size: .78rem; color: var(--doux); text-transform: capitalize; letter-spacing: .02em; }
   .ruban { display: inline-block; background: linear-gradient(135deg, var(--rose), var(--violet)); color: #fff; font-size: .68rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; padding: 3px 9px; border-radius: 999px; margin-bottom: 8px; }
   .qcarte { text-align: left; }
   .qcarte .surtitre { font-size: .74rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #b4566c; }
@@ -232,8 +235,7 @@
   <div id="nouveautes"></div>
   <div id="qdjBandeau"></div>
   <nav class="onglets" id="onglets" hidden>
-    <button data-tab="decouvrir" class="on">🆕 À lire<span class="n" id="nb" hidden></span></button>
-    <button data-tab="fil">📚 Toutes</button>
+    <button data-tab="fil" class="on">✦ Nos pépites<span class="n" id="nb" hidden></span></button>
     <button data-tab="questions">💭 Questions<span class="n" id="nbq" hidden>1</span></button>
   </nav>
   <p class="aide-onglet" id="aideOnglet" hidden></p>
@@ -337,6 +339,12 @@ const BANQUE = [
   "Qu'est-ce que ta génération a compris que la nôtre (ou la vôtre) n'a pas compris ?",
   "Qu'est-ce que la foi, la spiritualité ou le sens de la vie représentent pour toi ?",
   "Si tu pouvais dîner avec n'importe qui, mort ou vivant, qui choisirais-tu et que lui demanderais-tu ?",
+  "Si on te donnait une boîte contenant tout ce que tu as perdu dans ta vie, que chercherais-tu en premier ?",
+  "Quelles parts de toi as-tu perdues en essayant de devenir la personne que les autres attendaient ?",
+  "Si tu pouvais aller n'importe où dans le monde maintenant, choisirais-tu un lieu à visiter ou une personne à voir ?",
+  "Si tu avais le choix, effacerais-tu ton pire souvenir ou revivrais-tu ton meilleur ?",
+  "Quel « et si… » te hante encore le plus ?",
+  "Si ta vie devait s'arrêter dans un an, lesquels de tes soucis actuels cesseraient aussitôt de compter ?",
   "Quel petit plaisir te sauve une mauvaise journée ?",
   "Qu'est-ce que tu as appris en voyageant ou en vivant ailleurs ?",
   "Quelle est la plus grande leçon que l'échec t'ait donnée ?",
@@ -469,7 +477,7 @@ const S = {
   enLigne: new Set(),
   db: null, user: null, uid: null, canWrite: true,
   pepites: [], actions: {}, noms: {}, commentaires: [], brouillons: {}, reponses: [], questions: [], questionsOuvertes: new Set(), passagePrecedent: null, nouveautesFermees: false, vocal: null, ouvertsVocaux: new Set(),
-  charge: false, lent: false, erreur: null, onglet: "decouvrir",
+  charge: false, lent: false, erreur: null, onglet: "fil",
 };
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -619,15 +627,16 @@ function carte(p) {
   let fin = "";
   if (p.auteur === S.uid) fin = S.canWrite ? `<button class="del" data-del="${esc(p.id)}">Supprimer</button>` : "";
   else if (S.canWrite) fin = `<button class="merci ${appris ? "done" : ""}" data-learn="${esc(p.id)}">${appris ? "✓ Appris, merci" : "J'ai appris ✦"}</button>`;
-  const estNouvelle = S.passagePrecedent && p.auteur !== S.uid && String(p.date || "") > S.passagePrecedent;
-  return `<article class="carte">${estNouvelle ? `<span class="ruban">✨ Nouveau</span>` : ""}
+  const estNouvelle = S.uid && p.auteur !== S.uid && !appris;
+  const dateLongue = p.date ? new Date(p.date).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" }) : "";
+  return `<article class="carte"><div class="entete">${estNouvelle ? `<span class="ruban">✨ New</span>` : ""}<span class="date-carte">${esc(dateLongue)}</span></div>
     <div class="tampon">${svgMonument(lieu?.monument || "maison")}<span>${esc(lieu?.ville || "Famille")}</span></div>
     ${p.texte ? `<p class="texte">${avecLiens(p.texte)}</p>` : ""}
     ${p.vocal ? (S.ouvertsVocaux.has(p.id) && cacheVocal[p.vocal.id]
       ? `<audio controls preload="auto" data-vocal="${esc(p.id)}" src="${cacheVocal[p.vocal.id]}"></audio>`
       : `<button class="ecoute" data-ecoute="${esc(p.id)}">▶︎ Écouter la note vocale${p.vocal.duree ? " · " + fmtDuree(p.vocal.duree) : ""}</button>`) : ""}
     ${lien ? `<a class="lien" href="${esc(lien)}" target="_blank" rel="noopener">🔗 ${esc(new URL(lien).hostname.replace(/^www\./, ""))}</a>` : ""}
-    <div class="sign">${avatar(p.auteur, "mini")}<b>${esc(nom(p.auteur))}</b>${quand ? ", le " + quand : ""}${qui.length ? ` · appris par ${esc(qui.map(nom).join(", "))}` : ""}</div>
+    <div class="sign">${avatar(p.auteur, "mini")}<b>${esc(nom(p.auteur))}</b>${qui.length ? ` · appris par ${esc(qui.map(nom).join(", "))}` : ""}</div>
     <div class="actions">${reacts}${fin}</div>
     ${blocCommentaires(p)}
   </article>`;
@@ -688,20 +697,16 @@ function render() {
     ? `<div class="bandeau"><span>💭</span><span class="txt"><b>Question du jour :</b> ${esc(qdj.texte)}</span><button class="go" data-tab="questions">Répondre</button></div>` : "";
 
   const aide = $("#aideOnglet"); aide.hidden = false;
-  aide.textContent = S.onglet === "decouvrir"
-    ? "Les pépites de la famille que tu n'as pas encore lues. Clique sur « J'ai appris ✦ » et elles rejoignent toutes les autres."
-    : S.onglet === "questions"
+  aide.textContent = S.onglet === "questions"
     ? "Une question par jour pour se découvrir autrement. Réponds avec tes mots : celles des autres s'affichent une fois que tu as répondu."
-    : "Toutes les pépites partagées depuis le début, les tiennes comprises.";
+    : "Tout ce que la famille partage, du plus récent au plus ancien. ✨ New = pas encore lue par toi : clique sur « J'ai appris ✦ » une fois lue.";
   if (S.onglet === "questions") {
     liste.innerHTML = rendreQuestions();
-  } else if (S.onglet === "decouvrir") {
-    const s = serie();
-    liste.innerHTML = nouveaux.length
-      ? nouveaux.map(carte).join("") + (s ? `<div class="vide">🔥 ${s} jour${s > 1 ? "s" : ""} d'affilée à apprendre de ta famille</div>` : "")
-      : `<div class="vide">${S.pepites.length ? "Tu es à jour ✦<br>À ton tour d'émerveiller la famille." : "Le trésor est encore vide…<br>À toi l'honneur de déposer la toute première pépite ✦"}</div>`;
   } else {
-    liste.innerHTML = S.pepites.length ? S.pepites.map(carte).join("") : `<div class="vide">Le trésor est encore vide ✦</div>`;
+    const s = serie();
+    liste.innerHTML = S.pepites.length
+      ? S.pepites.map(carte).join("") + (s ? `<div class="vide">🔥 ${s} jour${s > 1 ? "s" : ""} d'affilée à apprendre de ta famille</div>` : "")
+      : `<div class="vide">Le trésor est encore vide…<br>À toi l'honneur de déposer la toute première pépite ✦</div>`;
   }
   // Garder les lecteurs audio existants (pour ne pas couper une écoute en cours)
   liste.querySelectorAll("audio[data-vocal]").forEach((n) => { const ancien = lecteurs.get(n.dataset.vocal); if (ancien) n.replaceWith(ancien); });
