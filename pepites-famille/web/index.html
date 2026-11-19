@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pépites de Famille</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=DM+Sans:wght@400;500;700&family=Amiri:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --nuit: #1d1838; --violet: #4a3a7a; --rose: #f29e8e; --or: #f6c177; --creme: #fff8ef;
+    --verre: rgba(255, 248, 239, .12); --verre-fort: rgba(255, 248, 239, .9); --bord: rgba(255, 255, 255, .22);
+    --encre: #2a2340; --doux: #6e6585;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    font-family: "DM Sans", system-ui, sans-serif; color: var(--creme);
+    background: var(--nuit) url("bg.jpg") center top / cover fixed no-repeat;
+  }
+  body::before { /* voile pour la lisibilité, du lever de soleil vers la nuit */
+    content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background: linear-gradient(180deg, rgba(29,24,56,.15) 0%, rgba(29,24,56,.45) 45%, rgba(29,24,56,.88) 100%);
+  }
+  .wrap { max-width: 680px; margin: 0 auto; padding: 0 18px 80px; position: relative; }
+  a { color: inherit; }
+
+  /* ---------- En-tête & horloge ---------- */
+  header { text-align: center; padding: 34px 0 10px; text-shadow: 0 2px 18px rgba(0,0,0,.35); }
+  .marque { font-family: "Fraunces", serif; font-size: .95rem; letter-spacing: .25em; text-transform: uppercase; opacity: .9; }
+  .heure { font-family: "Fraunces", serif; font-weight: 400; font-size: clamp(4rem, 17vw, 7rem); line-height: 1; margin: 14px 0 4px; font-variant-numeric: tabular-nums; }
+  .heure .sec { font-size: .32em; opacity: .7; vertical-align: top; margin-left: 4px; }
+  .date { font-size: 1.05rem; opacity: .92; text-transform: capitalize; }
+  .salut { margin-top: 12px; font-family: "Fraunces", serif; font-style: italic; font-size: 1.2rem; color: var(--or); }
+  .salut-ar { font-family: "Amiri", serif; font-size: 1.45rem; color: var(--or); margin-top: 2px; }
+
+  /* ---------- La famille ---------- */
+  .famille { display: flex; gap: 12px; overflow-x: auto; padding: 18px 2px 8px; margin-top: 12px; scrollbar-width: none; justify-content: safe center; }
+  .famille::-webkit-scrollbar { display: none; }
+  .membre { flex: 0 0 auto; width: 104px; text-align: center; background: var(--verre); border: 1px solid var(--bord); border-radius: 18px; padding: 12px 6px 10px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+  .membre.moi { border-color: var(--or); }
+  .membre button { all: unset; cursor: pointer; display: block; width: 100%; }
+  .membre { position: relative; }
+  .monument { width: 30px; height: 42px; color: var(--or); display: block; margin: 0 auto -6px; filter: drop-shadow(0 0 8px rgba(246,193,119,.45)); position: relative; z-index: 1; }
+  .monument.vide { color: rgba(255,255,255,.55); filter: none; }
+  .avatar { width: 58px; height: 58px; border-radius: 50%; margin: 0 auto 6px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--rose), var(--violet)); color: #fff; font-family: "Fraunces", serif; font-size: 1.5rem; border: 2px solid rgba(255,255,255,.8); overflow: hidden; }
+  .avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .etoiles { font-size: .78rem; color: var(--or); margin-top: 3px; font-weight: 700; }
+  .couronne { position: absolute; top: -10px; right: -4px; font-size: 1.2rem; transform: rotate(18deg); }
+  .mini { width: 24px; height: 24px; border-radius: 50%; display: inline-flex; vertical-align: middle; margin-right: 6px; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--rose), var(--violet)); color: #fff; font-size: .72rem; overflow: hidden; }
+  .mini img { width: 100%; height: 100%; object-fit: cover; }
+  .regle { margin: 10px 2px 0; font-size: .84rem; color: var(--doux); line-height: 1.45; }
+  .regle b { color: #b4566c; }
+  .compteur { font-size: .78rem; color: var(--doux); text-align: right; margin-top: 4px; min-height: 1em; }
+  .photo-choix { display: flex; align-items: center; gap: 12px; }
+  .photo-choix .avatar { margin: 0; flex: 0 0 auto; }
+  .photo-choix label.bouton { display: inline-block; margin: 0; padding: 9px 14px; border-radius: 999px; background: #fff; border: 1px solid #ecdfcb; cursor: pointer; font-weight: 500; font-size: .88rem; }
+  footer.origine { margin-top: 40px; padding: 22px 20px; text-align: center; border-top: 1px solid var(--bord); }
+  footer.origine h4 { font-family: "Fraunces", serif; font-weight: 600; font-size: 1.15rem; margin: 0 0 8px; color: var(--or); }
+  footer.origine p { margin: 0 auto; max-width: 480px; line-height: 1.6; font-size: .95rem; opacity: .9; }
+  footer.origine .bareme { margin-top: 14px; font-size: .84rem; opacity: .8; }
+  .membre .nom { font-weight: 700; font-size: .92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .membre .ville { font-size: .76rem; opacity: .8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gmt { display: inline-block; margin-top: 2px; padding: 3px 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,.4); font-size: .78rem; letter-spacing: .18em; font-weight: 700; }
+  .membre .dec { font-size: .66rem; opacity: .75; letter-spacing: .04em; }
+  .membre .h { font-family: "Fraunces", serif; font-size: 1.05rem; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .membre .ici { font-size: .74rem; color: var(--or); margin-top: 4px; }
+
+  /* ---------- Écrire ---------- */
+  .ecrire { margin-top: 22px; background: var(--verre-fort); color: var(--encre); border-radius: 22px; padding: 18px; box-shadow: 0 20px 50px rgba(0,0,0,.25); }
+  .ecrire h2 { font-family: "Fraunces", serif; font-weight: 600; font-size: 1.2rem; margin: 0 0 10px; }
+  textarea, input { width: 100%; border: 1px solid #e6dccb; border-radius: 14px; padding: 12px 14px; font: inherit; color: var(--encre); background: #fff; }
+  textarea { min-height: 96px; resize: vertical; font-family: "Fraunces", serif; font-size: 1.08rem; line-height: 1.5; }
+  textarea:focus, input:focus { outline: 2px solid var(--rose); border-color: transparent; }
+  .ligne { display: flex; gap: 8px; margin-top: 10px; }
+  .ligne input { flex: 1; font-size: .92rem; }
+  .btn { border: 0; border-radius: 14px; padding: 12px 18px; font: inherit; font-weight: 700; cursor: pointer; color: #fff; background: linear-gradient(135deg, var(--rose), #e0708a 60%, var(--violet)); white-space: nowrap; }
+  .btn:disabled { opacity: .5; cursor: default; }
+
+  /* ---------- Onglets ---------- */
+  .onglets { display: flex; gap: 8px; margin: 26px 0 14px; }
+  .onglets button { flex: 1; border: 1px solid var(--bord); background: var(--verre); color: var(--creme); border-radius: 999px; padding: 10px; font: inherit; font-weight: 500; cursor: pointer; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+  .onglets button.on { background: var(--creme); color: var(--encre); border-color: var(--creme); }
+  .onglets .n[hidden] { display: none; }
+  .onglets .n { display: inline-block; min-width: 20px; padding: 0 6px; border-radius: 999px; background: var(--rose); color: #fff; font-size: .78rem; margin-left: 4px; }
+
+  /* ---------- Cartes postales ---------- */
+  .carte { position: relative; background: var(--creme); color: var(--encre); border-radius: 6px 22px 22px 22px; padding: 22px 22px 16px; margin-bottom: 18px; box-shadow: 0 16px 40px rgba(0,0,0,.28); }
+  .carte:nth-child(odd) { transform: rotate(-.4deg); }
+  .carte:nth-child(even) { transform: rotate(.35deg); }
+  .tampon { position: absolute; top: 14px; right: 14px; width: 64px; height: 64px; border-radius: 50%; border: 2px dashed rgba(200,112,130,.6); color: #c87082; display: flex; flex-direction: column; align-items: center; justify-content: center; transform: rotate(8deg); }
+  .tampon svg { width: 22px; height: 30px; }
+  .tampon span { font-size: .55rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; max-width: 56px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .texte { font-family: "Fraunces", serif; font-size: 1.18rem; line-height: 1.55; margin: 0; padding-right: 70px; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .texte::before { content: "“"; font-size: 2.6rem; line-height: 0; vertical-align: -.45em; color: var(--rose); margin-right: 4px; }
+  .texte a { color: #b4566c; }
+  .lien { display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; padding: 7px 12px; border-radius: 999px; background: #f6ecdc; color: var(--encre); text-decoration: none; font-size: .88rem; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lien:hover { background: #f1e0c6; }
+  .sign { margin-top: 14px; font-size: .86rem; color: var(--doux); }
+  .sign b { color: var(--encre); }
+  .actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 12px; }
+  .actions button { border: 1px solid #ecdfcb; background: #fff; border-radius: 999px; padding: 6px 11px; cursor: pointer; font: inherit; font-size: .9rem; color: var(--encre); }
+  .actions button.mine { background: #fde3dc; border-color: var(--rose); }
+  .actions .merci { margin-left: auto; background: var(--encre); color: var(--creme); border-color: var(--encre); font-weight: 500; }
+  .actions .merci.done { background: #3d8a68; border-color: #3d8a68; }
+  .actions .del { margin-left: auto; border: 0; background: none; color: var(--doux); font-size: .82rem; }
+
+  .vide { text-align: center; padding: 36px 16px; font-family: "Fraunces", serif; font-style: italic; font-size: 1.1rem; opacity: .9; text-shadow: 0 2px 12px rgba(0,0,0,.4); }
+  .note { background: var(--verre); border: 1px dashed var(--bord); border-radius: 14px; padding: 10px 14px; font-size: .88rem; margin-top: 16px; backdrop-filter: blur(8px); }
+
+  /* ---------- Fenêtres ---------- */
+  .modal { position: fixed; inset: 0; background: rgba(20,16,40,.55); display: flex; align-items: center; justify-content: center; padding: 18px; z-index: 20; backdrop-filter: blur(4px); }
+  .modal form { width: 100%; max-width: 420px; background: var(--creme); color: var(--encre); border-radius: 22px; padding: 20px; max-height: 90vh; overflow: auto; }
+  .modal h3 { font-family: "Fraunces", serif; font-size: 1.3rem; margin: 0 0 6px; }
+  .modal p { color: var(--doux); margin: 0 0 12px; font-size: .92rem; }
+  .modal label { display: block; font-weight: 700; font-size: .85rem; margin: 12px 0 6px; }
+  .choix { display: grid; grid-template-columns: repeat(auto-fill, minmax(62px, 1fr)); gap: 6px; }
+  .choix button { border: 1px solid #ecdfcb; background: #fff; border-radius: 12px; padding: 6px 2px 4px; cursor: pointer; color: var(--violet); font: inherit; font-size: .62rem; }
+  .choix button svg { width: 26px; height: 36px; display: block; margin: 0 auto 2px; }
+  .choix button.on { background: #fde3dc; border-color: var(--rose); color: #b4566c; }
+  .modal .btn { width: 100%; margin-top: 16px; }
+  .modal .annuler { width: 100%; margin-top: 6px; background: none; border: 0; color: var(--doux); cursor: pointer; font: inherit; padding: 8px; }
+  .toast { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); background: var(--creme); color: var(--encre); padding: 10px 18px; border-radius: 999px; font-size: .92rem; z-index: 30; box-shadow: 0 10px 30px rgba(0,0,0,.3); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="marque">✦ Pépites de Famille ✦</div>
+    <div class="heure" id="heure">--:--</div>
+    <div class="gmt" title="Heure de référence commune à toute la famille">HEURE GMT</div>
+    <div class="date" id="date"></div>
+    <div class="salut" id="salut"></div>
+    <div class="salut-ar" id="salut-ar" dir="rtl" lang="ar"></div>
+  </header>
+
+  <section class="famille" id="famille" aria-label="La famille"></section>
+
+  <form class="ecrire" id="ecrire" hidden>
+    <h2>Dépose ta pépite ✦</h2>
+    <textarea id="texte" maxlength="2000" placeholder="Un déclic, une leçon de vie, une astuce qui t'a sauvé la mise… Qu'est-ce que tu veux nous transmettre aujourd'hui ?" required></textarea>
+    <div class="compteur" id="compteur"></div>
+    <div class="ligne">
+      <input id="lienSaisi" type="text" inputmode="url" autocapitalize="off" maxlength="500" placeholder="🔗 Un lien pour creuser (facultatif)" />
+      <button class="btn" id="envoyer">Transmettre ✦</button>
+    </div>
+    <p class="regle">💡 <b>La règle d'or :</b> un lien balancé tout seul, ça ne compte pas 😉 Raconte avec tes mots ce que tu en as retenu et pourquoi ça vaut le coup. C'est ça, la vraie pépite.</p>
+  </form>
+
+  <div id="note"></div>
+
+  <nav class="onglets" id="onglets" hidden>
+    <button data-tab="decouvrir" class="on">Nouvelles pépites<span class="n" id="nb" hidden></span></button>
+    <button data-tab="fil">Le trésor de famille</button>
+  </nav>
+
+  <main id="liste"><div class="vide">Chargement…</div></main>
+
+  <footer class="origine">
+    <h4>Pourquoi ce petit coin ?</h4>
+    <p>Un constat tout simple : on passe des heures à scroller sur les réseaux, alors qu'on a sous la main ce qu'il y a de plus précieux, l'expérience de ceux qu'on aime.<br><br><b>Alors au lieu de scroller, venez : chaque jour, on apprend quelque chose les uns des autres.</b> ✦</p>
+    <button id="deco" data-deconnexion="1" hidden style="margin-top:14px;background:none;border:0;color:inherit;opacity:.6;cursor:pointer;font:inherit;font-size:.8rem;text-decoration:underline">Se déconnecter</button>
+    <div class="bareme">⭐ +3 par pépite transmise · ⭐ +1 chaque fois que quelqu'un apprend grâce à toi · 👑 pour le plus grand transmetteur</div>
+  </footer>
+</div>
+
+<script type="module">
+import { FIREBASE_CONFIG } from "./config.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, collection, doc, setDoc, addDoc, deleteDoc, getDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+// ---------- Monuments (dessins au trait) ----------
+const MONUMENTS = {
+  eiffel:   { nom: "Tour Eiffel", d: "M20 2v6M17 8h6M16.5 8 12 30M23.5 8 28 30M11 30h18M12 30 6 54M28 30l6 24M9 42h22M14 54q6-11 12 0M17 19h6" },
+  bigben:   { nom: "Big Ben", d: "M14 54V18h12v36M12 18h16M14 18l6-12 6 12M20 6V2M14 32h12M14 43h12", c: [[20, 25, 3.5]] },
+  liberte:  { nom: "Liberté", d: "M25 2v4M22.5 6h5l-1 3h-3zM25 9v9M16 21q4-4 9-3l-1 16h-8zM14 34h12M12 38h16v16H12zM18 18q-1-4 2-5" },
+  colisee:  { nom: "Colisée", d: "M4 54V24q16-8 32 0v30M4 34q16-6 32 0M4 44q16-5 32 0M10 54v-8M16 54v-9M22 54v-9M28 54v-8M10 37v-6M16 35v-6M22 35v-6M28 37v-6" },
+  pyramides:{ nom: "Pyramides", d: "M2 54l14-26 14 26zM16 28l4 26M20 54l9-16 9 16" },
+  minaret:  { nom: "Minaret", d: "M13 54V14h14v40M11 14h18M15 14V8h10v6M20 8V4M17 22h6v6h-6zM17 36h6v8h-6z", c: [[20, 2.5, 1.4]] },
+  coupole:  { nom: "Mosquée", d: "M8 54V36h24v18M8 36q12-20 24 0M20 16v-4M4 54V18M36 54V18M3 18l1-6 1 6M35 18l1-6 1 6M16 54v-8q4-4 8 0v8" },
+  burj:     { nom: "Burj Khalifa", d: "M20 2v8M18 10h4v6h-4zM16 16h8l1.5 38h-11zM11 54l4-20M29 54l-4-20M7 54h26" },
+  fuji:     { nom: "Mont Fuji", d: "M2 54l14-28h8l14 28zM16 26l3 6 3-4 3 4 2-6", c: [[33, 12, 4]] },
+  opera:    { nom: "Opéra", d: "M2 46h36v8H2zM6 46q2-14 12-18-2 10-4 18M14 46q4-16 14-20-2 12-6 20M24 46q4-10 12-12-2 6-4 12" },
+  christ:   { nom: "Christ", d: "M4 17h32M20 12v6M17 18h6l-1 26h-4zM11 54l9-10 9 10z", c: [[20, 8, 3]] },
+  atomium:  { nom: "Atomium", d: "M20 10 8 28M20 10l12 18M20 10v36M8 28l12 18M32 28 20 46M20 46l-6 8M20 46l6 8M8 28h24", c: [[20, 10, 3.5], [8, 28, 3.5], [32, 28, 3.5], [20, 28, 3.5], [20, 46, 3.5]] },
+  sagrada:  { nom: "Basilique", d: "M8 54V22l3-14 3 14v32M17 54V14l3-12 3 12v40M26 54V22l3-14 3 14v32M5 54h30M14 36h12" },
+  hassan:   { nom: "Tour Hassan", d: "M11 54V10h18v44M9 10h22M15 18q5-6 10 0v8H15zM15 32h10v10H15zM18 32v10M22 32v10M3 54v-7M7 54v-7M33 54v-7M37 54v-7M1 54h38" },
+  m6:       { nom: "Tour Mohammed VI", d: "M20 2q-8 18-7 52h14q1-34-7-52zM15.5 20h9M14 32h12M13.5 44h13M17 2.5h6M8 54h24" },
+  oudayas:  { nom: "Kasbah des Oudayas", d: "M4 54V16h32v38M4 16l3-4 3 4 3-4 3 4 3-4 3 4 3-4 3 4 3-4 3 4 3-4 2 4M13 54V38q7-12 14 0v16M9 32q11-16 22 0" },
+  mausolee: { nom: "Mausolée Mohammed V", d: "M8 54V28h24v26M6 28h28M8 28l12-13 12 13M20 15v-4M13 54V40q3-4 6 0v14M21 54V40q3-4 6 0v14" },
+  ville:    { nom: "Ville", d: "M4 54V30h8v24M12 54V16h10v38M22 54V26h8v28M30 54V36h6v18M15 22h4M15 30h4M15 38h4M25 32h2M25 40h2" },
+  maison:   { nom: "Maison", d: "M7 54V30L20 17l13 13v24zM16 54V42h8v12M3 32 20 15l17 17M27 22v-6h4v10" },
+  palmier:  { nom: "Palmier", d: "M20 54q-2-20 2-34M22 20q-8-6-16-2M22 20q8-7 16-3M22 20q-4-10-12-12M22 20q5-10 13-11M22 20q0-8-2-14M8 54h26" },
+};
+const RABAT = ["mausolee", "oudayas", "m6", "hassan"]; // affichés en premier
+const VILLES = [
+  ["Paris", "Europe/Paris", "eiffel"], ["Lyon", "Europe/Paris", "ville"], ["Marseille", "Europe/Paris", "sagrada"],
+  ["Londres", "Europe/London", "bigben"], ["New York", "America/New_York", "liberte"], ["Rome", "Europe/Rome", "colisee"],
+  ["Le Caire", "Africa/Cairo", "pyramides"], ["Marrakech", "Africa/Casablanca", "minaret"], ["Casablanca", "Africa/Casablanca", "coupole"],
+  ["Rabat", "Africa/Casablanca", "hassan"], ["Salé", "Africa/Casablanca", "m6"], ["Fès", "Africa/Casablanca", "minaret"], ["Tanger", "Africa/Casablanca", "minaret"],
+  ["Agadir", "Africa/Casablanca", "palmier"], ["Istanbul", "Europe/Istanbul", "coupole"], ["Dubaï", "Asia/Dubai", "burj"],
+  ["Tokyo", "Asia/Tokyo", "fuji"], ["Sydney", "Australia/Sydney", "opera"], ["Rio de Janeiro", "America/Sao_Paulo", "christ"],
+  ["Bruxelles", "Europe/Brussels", "atomium"], ["Barcelone", "Europe/Madrid", "sagrada"], ["Madrid", "Europe/Madrid", "ville"],
+  ["Montréal", "America/Toronto", "ville"], ["Genève", "Europe/Zurich", "ville"], ["Berlin", "Europe/Berlin", "ville"],
+];
+const sansAccent = (s) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+const villeConnue = (v) => VILLES.find(([n]) => sansAccent(n) === sansAccent(v));
+
+function svgMonument(cle, cls = "") {
+  const m = MONUMENTS[cle] || MONUMENTS.maison;
+  const cercles = (m.c || []).map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}"/>`).join("");
+  return `<svg class="${cls}" viewBox="0 0 40 56" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${m.d}"/>${cercles}</svg>`;
+}
+
+// ---------- État ----------
+const EMOJIS = ["❤️", "🤯", "🙏"];
+const S = {
+  db: null, user: null, uid: null, canWrite: true,
+  pepites: [], actions: {}, noms: {},
+  charge: false, lent: false, erreur: null, onglet: "decouvrir",
+};
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const jourLocal = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+function toast(msg) { document.querySelectorAll(".toast").forEach((x) => x.remove()); const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2400); }
+
+// Liens : n'accepte que http(s)
+function urlSure(u) {
+  try { const x = new URL(/^https?:\/\//i.test(u) ? u : "https://" + u); return /^https?:$/.test(x.protocol) && x.hostname.includes(".") ? x.href : null; }
+  catch { return null; }
+}
+function avecLiens(texte) {
+  return esc(texte).replace(/\bhttps?:\/\/[^\s<]+[^\s<.,;:!?)"']/gi, (m) => {
+    const brut = m.replace(/&amp;/g, "&"); const u = urlSure(brut);
+    return u ? `<a href="${esc(u)}" target="_blank" rel="noopener">${m}</a>` : m;
+  });
+}
+
+// ---------- Horloge ----------
+function heureA(tz, opts = {}) {
+  try { return new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: tz || undefined, ...opts }).format(new Date()); }
+  catch { return new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit" }).format(new Date()); }
+}
+// Décalage par rapport à GMT, ex. "GMT+1"
+function decalage(tz) {
+  try {
+    const p = new Intl.DateTimeFormat("en-US", { timeZone: tz, timeZoneName: "shortOffset" }).formatToParts(new Date()).find((x) => x.type === "timeZoneName");
+    return p ? p.value.replace(/^GMT\+?0?$/, "GMT") : "";
+  } catch { return ""; }
+}
+// Salutation selon l'heure de l'appareil de chacun (donc son propre fuseau)
+function salutation() {
+  const h = new Date().getHours();
+  return h >= 5 && h < 17
+    ? ["Bonjour, chère petite famille ✦", "صباح الخير يا عائلتي الصغيرة الغالية"]
+    : ["Bonsoir, chère petite famille ✦", "مساء الخير يا عائلتي الصغيرة الغالية"];
+}
+function tic() {
+  const d = new Date();
+  $("#heure").innerHTML = `${heureA("UTC")}<span class="sec">${String(d.getUTCSeconds()).padStart(2, "0")}</span>`;
+  $("#date").textContent = d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
+  document.querySelectorAll("[data-tz]").forEach((el) => (el.textContent = heureA(el.dataset.tz)));
+  document.querySelectorAll("[data-dec]").forEach((el) => (el.textContent = decalage(el.dataset.dec)));
+  const [fr, ar] = salutation();
+  if ($("#salut").textContent !== fr) { $("#salut").textContent = fr; $("#salut-ar").textContent = ar; }
+}
+setInterval(tic, 1000);
+
+// ---------- Noms ----------
+function nom(uid) { return S.actions[uid]?.surnom || S.noms[uid] || "Quelqu'un"; }
+let nomsEnCours = false;
+async function resoudreNoms() {
+  if (!S.user || nomsEnCours) return;
+  const ids = [...new Set([...S.pepites.map((p) => p.auteur), ...Object.keys(S.actions)])].filter((id) => id && !(id in S.noms));
+  if (!ids.length) return;
+  nomsEnCours = true;
+  try { const ps = await S.user.profiles(ids); ids.forEach((id) => (S.noms[id] = ps?.[id]?.name || "")); }
+  catch { ids.forEach((id) => (S.noms[id] = "")); }
+  nomsEnCours = false; render();
+}
+
+// ---------- Mon document (actions/<uid>) ----------
+const moi = () => S.actions[S.uid] || {};
+let fileEcriture = Promise.resolve();
+function ecrireMoi(modif) {
+  if (!S.db || !S.uid || !S.canWrite) return;
+  const nouveau = { surnom: "", appris: {}, reactions: {}, ...JSON.parse(JSON.stringify(moi())) };
+  modif(nouveau);
+  nouveau.code = nouveau.code || CODE;
+  S.actions = { ...S.actions, [S.uid]: nouveau };
+  render();
+  fileEcriture = fileEcriture.then(() => S.db.doc("membres/" + S.uid).set(nouveau)).then(() => { if (!S.abonne) demarrer(); }).catch((e) => {
+    if (!S.abonne) { S.actions = {}; S.erreur = "Ce lien d'invitation ne marche pas. Redemande le bon lien à la famille ✦"; render(); }
+    else if (e?.code === "invalid_argument") { S.canWrite = false; render(); }
+    else toast("Pas pu enregistrer, réessaie.");
+  });
+}
+const apprisPar = (pid) => Object.entries(S.actions).filter(([, a]) => a.appris?.[pid]).map(([u]) => u);
+const reactionsDe = (pid, e) => Object.entries(S.actions).filter(([, a]) => (a.reactions?.[pid] || []).includes(e)).map(([u]) => u);
+function serie() {
+  const jours = new Set(Object.values(moi().appris || {}));
+  const d = new Date(); let n = 0;
+  if (!jours.has(jourLocal(d))) d.setDate(d.getDate() - 1);
+  while (jours.has(jourLocal(d))) { n++; d.setDate(d.getDate() - 1); }
+  return n;
+}
+// Étoiles : +3 par pépite transmise, +1 chaque fois que quelqu'un d'autre apprend grâce à toi
+function etoiles(uid) {
+  const miennes = S.pepites.filter((p) => p.auteur === uid);
+  return miennes.length * 3 + miennes.reduce((n, p) => n + apprisPar(p.id).filter((u) => u !== uid).length, 0);
+}
+function roi(ids) {
+  let best = null, max = 0;
+  ids.forEach((id) => { const e = etoiles(id); if (e > max) { max = e; best = id; } else if (e === max) best = null; });
+  return best;
+}
+function avatar(uid, cls = "avatar") {
+  const photo = S.actions[uid]?.photo;
+  const ok = typeof photo === "string" && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(photo);
+  return `<div class="${cls}">${ok ? `<img src="${photo}" alt="">` : esc((nom(uid)[0] || "?").toUpperCase())}</div>`;
+}
+// Le texte doit apporter quelque chose en plus d'un lien
+const MIN_MOTS = 40;
+const longueurUtile = (t) => t.replace(/https?:\/\/\S+/gi, "").replace(/\s+/g, " ").trim().length;
+
+const aDecouvrir = () => S.pepites.filter((p) => p.auteur !== S.uid && (!moi().appris?.[p.id] || moi().appris[p.id] === jourLocal()));
+
+// ---------- Rendu ----------
+function renderFamille() {
+  const ids = [...new Set([S.uid, ...Object.keys(S.actions), ...S.pepites.map((p) => p.auteur)])].filter(Boolean);
+  const champion = roi(ids);
+  $("#famille").innerHTML = ids.map((id) => {
+    const lieu = S.actions[id]?.lieu;
+    const estMoi = id === S.uid;
+    const e = etoiles(id);
+    const contenu = `
+      ${id === champion ? `<span class="couronne" title="Plus grand transmetteur">👑</span>` : ""}
+      ${svgMonument(lieu?.monument || "maison", "monument" + (lieu ? "" : " vide"))}
+      ${avatar(id)}
+      <div class="nom">${esc(nom(id))}</div>
+      <div class="ville">${lieu ? esc(lieu.ville) : estMoi ? "&nbsp;" : "Quelque part"}</div>
+      ${lieu ? `<div class="h" data-tz="${esc(lieu.tz)}">${heureA(lieu.tz)}</div><div class="dec" data-dec="${esc(lieu.tz)}">${decalage(lieu.tz)}</div>` : ""}
+      <div class="etoiles">⭐ ${e}</div>
+      ${estMoi && S.canWrite ? `<div class="ici">✎ Mon profil</div>` : ""}`;
+    return `<div class="membre ${estMoi ? "moi" : ""}">${estMoi && S.canWrite ? `<button data-lieu="1" title="Modifier mon profil">${contenu}</button>` : contenu}</div>`;
+  }).join("");
+}
+
+function carte(p) {
+  const lieu = p.lieu;
+  const appris = !!moi().appris?.[p.id];
+  const reacts = EMOJIS.map((e) => {
+    const l = reactionsDe(p.id, e);
+    return `<button data-react="${e}" data-id="${esc(p.id)}" class="${l.includes(S.uid) ? "mine" : ""}" title="${esc(l.map(nom).join(", "))}" ${S.canWrite ? "" : "disabled"}>${e}${l.length ? " " + l.length : ""}</button>`;
+  }).join("");
+  const lien = p.lien && urlSure(p.lien);
+  const qui = apprisPar(p.id);
+  const quand = p.date ? new Date(p.date).toLocaleDateString("fr-FR", { day: "numeric", month: "long" }) : "";
+  let fin = "";
+  if (p.auteur === S.uid) fin = S.canWrite ? `<button class="del" data-del="${esc(p.id)}">Supprimer</button>` : "";
+  else if (S.canWrite) fin = `<button class="merci ${appris ? "done" : ""}" data-learn="${esc(p.id)}">${appris ? "✓ Appris, merci" : "J'ai appris ✦"}</button>`;
+  return `<article class="carte">
+    <div class="tampon">${svgMonument(lieu?.monument || "maison")}<span>${esc(lieu?.ville || "Famille")}</span></div>
+    <p class="texte">${avecLiens(p.texte)}</p>
+    ${lien ? `<a class="lien" href="${esc(lien)}" target="_blank" rel="noopener">🔗 ${esc(new URL(lien).hostname.replace(/^www\./, ""))}</a>` : ""}
+    <div class="sign">${avatar(p.auteur, "mini")}<b>${esc(nom(p.auteur))}</b>${quand ? ", le " + quand : ""}${qui.length ? ` · appris par ${esc(qui.map(nom).join(", "))}` : ""}</div>
+    <div class="actions">${reacts}${fin}</div>
+  </article>`;
+}
+
+function render() {
+  tic();
+  const horsFil = S.ecran === "connexion" || (!S.abonne && !S.actions[S.uid]);
+  $("#famille").hidden = horsFil;
+  if (S.ecran === "connexion") {
+    $("#ecrire").hidden = true; $("#onglets").hidden = true; $("#note").innerHTML = "";
+    $("#liste").innerHTML = `<div class="ecrire" style="text-align:center">
+      <h2>Entre dans le cercle ✦</h2>
+      <p class="regle" style="margin-bottom:16px">Connecte-toi avec ton compte Google : c'est ce qui garantit que toi seul peux modifier ton profil et tes pépites.</p>
+      <button class="btn" data-connexion="1" style="width:100%">Se connecter avec Google</button></div>`;
+    return;
+  }
+  renderFamille();
+  $("#ecrire").hidden = !(S.charge && S.canWrite);
+  $("#onglets").hidden = !S.charge;
+  document.querySelectorAll("#onglets button").forEach((b) => b.classList.toggle("on", b.dataset.tab === S.onglet));
+  $("#note").innerHTML = "";
+
+  const liste = $("#liste");
+  if (S.erreur) { liste.innerHTML = `<div class="vide">${esc(S.erreur)}</div>`; return; }
+  if (!S.charge) { liste.innerHTML = `<div class="vide">${S.lent ? "Le fil met du temps à arriver… vérifie ta connexion." : "Chargement…"}</div>`; return; }
+
+  const nouveaux = aDecouvrir();
+  const restants = nouveaux.filter((p) => !moi().appris?.[p.id]).length;
+  $("#nb").hidden = !restants; $("#nb").textContent = restants;
+
+  if (S.onglet === "decouvrir") {
+    const s = serie();
+    liste.innerHTML = nouveaux.length
+      ? nouveaux.map(carte).join("") + (s ? `<div class="vide">🔥 ${s} jour${s > 1 ? "s" : ""} d'affilée à apprendre de ta famille</div>` : "")
+      : `<div class="vide">${S.pepites.length ? "Tu es à jour ✦<br>À ton tour d'émerveiller la famille." : "Le trésor est encore vide…<br>À toi l'honneur de déposer la toute première pépite ✦"}</div>`;
+  } else {
+    liste.innerHTML = S.pepites.length ? S.pepites.map(carte).join("") : `<div class="vide">Le trésor est encore vide ✦</div>`;
+  }
+}
+
+// ---------- Actions ----------
+$("#ecrire").onsubmit = async (e) => {
+  e.preventDefault();
+  const texte = $("#texte").value.trim();
+  const brut = $("#lienSaisi").value.trim();
+  if (!texte) return;
+  if (longueurUtile(texte) < MIN_MOTS) {
+    toast(/https?:\/\//i.test(texte) || brut ? "Un lien tout seul, c'est un peu sec 😉 Dis-nous ce que tu en as retenu !" : "Encore quelques mots pour que ce soit une vraie pépite ✦");
+    $("#texte").focus(); return;
+  }
+  const lien = brut ? urlSure(brut) : "";
+  if (brut && !lien) { toast("Ce lien n'a pas l'air valide."); return; }
+  const btn = $("#envoyer"); btn.disabled = true;
+  try {
+    const lieu = moi().lieu;
+    await S.db.collection("pepites").add({
+      texte: texte.slice(0, 2000), lien: lien || "", auteur: S.uid, date: new Date().toISOString(),
+      lieu: lieu ? { ville: lieu.ville, monument: lieu.monument } : null,
+    });
+    $("#texte").value = ""; $("#lienSaisi").value = ""; majCompteur();
+    toast("Pépite transmise ✦ +3 ⭐"); S.onglet = "fil"; render();
+  } catch (err) {
+    if (err?.code === "invalid_argument") { S.canWrite = false; render(); }
+    else toast(err?.code === "quota_exceeded" ? "Le fil est plein." : "Pas pu partager, réessaie.");
+  }
+  btn.disabled = false;
+};
+
+function majCompteur() {
+  const t = $("#texte").value, n = longueurUtile(t);
+  $("#compteur").textContent = !t.trim() ? "" : n < MIN_MOTS ? `Encore ${MIN_MOTS - n} caractères de ta plume ✍️` : "Parfait ✦";
+}
+$("#texte").addEventListener("input", majCompteur);
+
+// Réduit la photo choisie à un petit carré JPEG (pour rester léger)
+function photoReduite(fichier) {
+  return new Promise((ok, ko) => {
+    const img = new Image();
+    const url = URL.createObjectURL(fichier);
+    img.onload = () => {
+      const T = 160, c = document.createElement("canvas"); c.width = c.height = T;
+      const s = Math.min(img.width, img.height);
+      c.getContext("2d").drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, T, T);
+      URL.revokeObjectURL(url); ok(c.toDataURL("image/jpeg", 0.8));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); ko(); };
+    img.src = url;
+  });
+}
+
+function fenetreProfil(premiereFois) {
+  const m = document.createElement("div");
+  m.className = "modal";
+  const actuel = moi();
+  let monument = actuel.lieu?.monument || "";
+  let photo = actuel.photo || "";
+  m.innerHTML = `<form>
+    <h3>${premiereFois ? "Bienvenue dans la famille ✦" : "Mon profil"}</h3>
+    <p>Ta photo, ton nom et ton lieu de vie s'affichent en haut, avec le monument de ta ville et ton heure.</p>
+    <label>Ta photo</label>
+    <div class="photo-choix"><div class="avatar" id="p-apercu"></div>
+      <label class="bouton" for="p-photo">📷 Choisir une photo</label>
+      <input id="p-photo" type="file" accept="image/*" hidden /></div>
+    <label for="p-nom">Comment la famille t'appelle</label>
+    <input id="p-nom" maxlength="40" placeholder="Maman, Papa, Sarah…" required />
+    <label for="p-ville">Où tu vis</label>
+    <input id="p-ville" maxlength="40" list="villes" placeholder="Rabat, Paris, Casablanca…" />
+    <datalist id="villes">${VILLES.map(([n]) => `<option value="${n}">`).join("")}</datalist>
+    <label>Ton monument</label>
+    <div class="choix" id="p-mon">${Object.entries(MONUMENTS).sort(([a], [b]) => RABAT.indexOf(b) - RABAT.indexOf(a)).map(([k, v]) => `<button type="button" data-m="${k}">${svgMonument(k)}${v.nom}</button>`).join("")}</div>
+    <button class="btn">C'est parti</button>
+    ${S.abonne ? `<button type="button" class="annuler">Plus tard</button>` : ""}
+  </form>`;
+  document.body.appendChild(m);
+  const nomIn = m.querySelector("#p-nom"), villeIn = m.querySelector("#p-ville");
+  nomIn.value = actuel.surnom || (S.prenomGoogle || ""); villeIn.value = actuel.lieu?.ville || "";
+  const apercu = () => { const a = m.querySelector("#p-apercu"); a.innerHTML = photo ? `<img src="${photo}" alt="">` : "📷"; };
+  apercu();
+  m.querySelector("#p-photo").onchange = async (e) => {
+    const f = e.target.files?.[0]; if (!f) return;
+    try { photo = await photoReduite(f); apercu(); } catch { toast("Cette image n'a pas pu être lue."); }
+  };
+  const marquer = () => m.querySelectorAll("#p-mon button").forEach((b) => b.classList.toggle("on", b.dataset.m === monument));
+  marquer();
+  villeIn.oninput = () => { const v = villeConnue(villeIn.value); if (v) { monument = v[2]; marquer(); } };
+  m.querySelector("#p-mon").onclick = (e) => { const b = e.target.closest("button"); if (b) { monument = b.dataset.m; marquer(); } };
+  m.querySelector(".annuler")?.addEventListener("click", () => m.remove());
+  (premiereFois || !actuel.surnom ? nomIn : villeIn).focus();
+  m.querySelector("form").onsubmit = (e) => {
+    e.preventDefault();
+    const surnom = nomIn.value.trim().slice(0, 40);
+    const ville = villeIn.value.trim().slice(0, 40);
+    if (!surnom) return;
+    const connue = villeConnue(ville);
+    const lieu = ville ? {
+      ville: connue ? connue[0] : ville,
+      tz: connue ? connue[1] : Intl.DateTimeFormat().resolvedOptions().timeZone,
+      monument: monument || (connue ? connue[2] : "ville"),
+    } : null;
+    ecrireMoi((x) => { x.surnom = surnom; if (photo) x.photo = photo; if (lieu) x.lieu = lieu; else delete x.lieu; });
+    m.remove();
+  };
+}
+
+document.addEventListener("click", async (e) => {
+  const t = e.target.closest("button"); if (!t || t.closest(".modal")) return;
+  if (t.dataset.connexion) {
+    const p = new GoogleAuthProvider();
+    try { await signInWithPopup(auth, p); }
+    catch (err) { if (err?.code !== "auth/popup-closed-by-user") signInWithRedirect(auth, p); }
+  }
+  if (t.dataset.deconnexion) { await signOut(auth); location.reload(); }
+  if (t.dataset.tab) { S.onglet = t.dataset.tab; render(); }
+  if (t.dataset.lieu) fenetreProfil(false);
+  if (t.dataset.react) {
+    const { id, react } = t.dataset;
+    ecrireMoi((m) => { const l = m.reactions[id] || []; m.reactions[id] = l.includes(react) ? l.filter((x) => x !== react) : [...l, react]; });
+  }
+  if (t.dataset.learn) {
+    const id = t.dataset.learn;
+    ecrireMoi((m) => { if (m.appris[id]) delete m.appris[id]; else m.appris[id] = jourLocal(); });
+  }
+  if (t.dataset.del) {
+    if (t.dataset.confirm) {
+      try { await S.db.doc("pepites/" + t.dataset.del).delete(); toast("Pépite supprimée"); } catch { toast("Pas pu supprimer."); }
+    } else { t.dataset.confirm = "1"; t.textContent = "Confirmer ?"; }
+  }
+});
+
+// ---------- Démarrage (Firebase) ----------
+// Code famille : il arrive dans le lien d'invitation (https://…/#mon-code) et on le garde sur l'appareil.
+const CODE = (() => {
+  const h = (location.hash.match(/^#([\w-]{4,64})$/) || [])[1];
+  try { if (h) { localStorage.setItem("codeFamille", h); history.replaceState(null, "", location.pathname); } return h || localStorage.getItem("codeFamille"); }
+  catch { return h || null; }
+})();
+
+let auth, fdb;
+const enErreur = (e) => ({ code: e?.code === "permission-denied" ? "invalid_argument" : e?.code === "resource-exhausted" ? "quota_exceeded" : "unavailable", message: e?.message });
+// Petit adaptateur : même interface que le reste du code attend
+const db = {
+  collection(path) {
+    const c = collection(fdb, path); let q = c;
+    const api = {
+      orderBy(f, d) { q = query(c, orderBy(f, d)); return api; },
+      onSnapshot(next, err) {
+        return onSnapshot(q, (s) => next({ docs: s.docs.map((d) => ({ id: d.id, data: () => d.data() })), size: s.size, metadata: { fromCache: false } }), (e) => err?.(enErreur(e)));
+      },
+      add: (data) => addDoc(c, data).catch((e) => { throw enErreur(e); }),
+    };
+    return api;
+  },
+  doc(path) {
+    const r = doc(fdb, path);
+    return { set: (d) => setDoc(r, d).catch((e) => { throw enErreur(e); }), delete: () => deleteDoc(r).catch((e) => { throw enErreur(e); }) };
+  },
+};
+
+function demarrer() {
+  if (S.abonne) return;
+  S.abonne = true; S.erreur = null;
+  let okP = false, okA = false, demande = false;
+  const timer = setTimeout(() => { S.lent = true; render(); }, 10000);
+  const pret = () => {
+    if (okP && okA) { S.charge = true; clearTimeout(timer); }
+    render();
+    if (S.charge && !moi().surnom && !demande) { demande = true; fenetreProfil(true); }
+  };
+  db.collection("pepites").orderBy("date", "desc").onSnapshot((snap) => {
+    S.pepites = snap.docs.map((d) => ({ id: d.id, ...d.data() })).filter((p) => typeof p.texte === "string");
+    okP = true; pret();
+  }, () => { clearTimeout(timer); S.erreur = "Impossible de charger le fil."; render(); });
+  db.collection("membres").onSnapshot((snap) => {
+    const a = {}; snap.docs.forEach((d) => (a[d.id] = d.data())); S.actions = a;
+    okA = true; pret();
+  }, () => { okA = true; pret(); });
+}
+
+(async () => {
+  render();
+  if (!FIREBASE_CONFIG || !FIREBASE_CONFIG.apiKey || FIREBASE_CONFIG.apiKey.startsWith("A_REMPLIR")) {
+    S.erreur = "Le site n'est pas encore relié à sa base de données (fichier config.js à remplir)."; render(); return;
+  }
+  const app = initializeApp(FIREBASE_CONFIG);
+  auth = getAuth(app); fdb = getFirestore(app);
+  S.db = db;
+  onAuthStateChanged(auth, async (u) => {
+    if (!u) { S.ecran = "connexion"; render(); return; }
+    S.ecran = null; S.uid = u.uid; S.canWrite = true;
+    S.prenomGoogle = (u.displayName || "").split(" ")[0];
+    $("#deco").hidden = false;
+    let membre = false;
+    try { membre = (await getDoc(doc(fdb, "membres", u.uid))).exists(); } catch {}
+    if (membre) demarrer();
+    else if (CODE) { render(); fenetreProfil(true); }
+    else { S.erreur = "Pour rejoindre la famille, ouvre le lien d'invitation qu'on t'a envoyé ✦"; render(); }
+  });
+})();
+</script>
+</body>
+</html>

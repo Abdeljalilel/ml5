@@ -1,0 +1,42 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function connecte() { return request.auth != null; }
+    function membre() {
+      return connecte() && exists(/databases/$(database)/documents/membres/$(request.auth.uid));
+    }
+    function codeFamille() {
+      return get(/databases/$(database)/documents/config/acces).data.code;
+    }
+
+    // Le code famille : personne ne peut le lire ni le modifier depuis le site.
+    match /config/{doc} {
+      allow read, write: if false;
+    }
+
+    // Profils : chacun ne crée et ne modifie QUE le sien, et il faut le bon code pour entrer.
+    match /membres/{uid} {
+      allow read: if membre() || (connecte() && request.auth.uid == uid);
+      allow create: if connecte() && request.auth.uid == uid
+                    && request.resource.data.code == codeFamille()
+                    && request.resource.data.surnom is string
+                    && request.resource.data.surnom.size() <= 40;
+      allow update: if connecte() && request.auth.uid == uid
+                    && request.resource.data.code == resource.data.code
+                    && request.resource.data.surnom is string
+                    && request.resource.data.surnom.size() <= 40;
+      allow delete: if connecte() && request.auth.uid == uid;
+    }
+
+    // Pépites : lisibles par la famille ; seul l'auteur peut créer ou supprimer la sienne.
+    match /pepites/{id} {
+      allow read: if membre();
+      allow create: if membre()
+                    && request.resource.data.auteur == request.auth.uid
+                    && request.resource.data.texte is string
+                    && request.resource.data.texte.size() >= 40
+                    && request.resource.data.texte.size() <= 2000;
+      allow delete: if membre() && resource.data.auteur == request.auth.uid;
+    }
+  }
+}
