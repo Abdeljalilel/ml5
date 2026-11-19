@@ -124,6 +124,13 @@
   .texte a { color: #b4566c; }
   .lien { display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; padding: 7px 12px; border-radius: 999px; background: #f6ecdc; color: var(--encre); text-decoration: none; font-size: .88rem; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .lien:hover { background: #f1e0c6; }
+  .vocal-zone { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .vocal-btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 14px; border-radius: 999px; background: #fff; border: 1px solid #ecdfcb; cursor: pointer; font-weight: 500; font-size: .9rem; color: var(--encre); }
+  .vocal-pris { font-size: .88rem; color: var(--encre); background: #fde3dc; border-radius: 999px; padding: 7px 12px; }
+  .vocal-pris button { border: 0; background: none; cursor: pointer; color: var(--doux); margin-left: 4px; }
+  .vocal-aide { font-size: .78rem; color: var(--doux); width: 100%; margin: 2px 4px 0; }
+  .ecoute { display: inline-flex; align-items: center; gap: 8px; margin-top: 12px; padding: 9px 16px; border-radius: 999px; border: 0; cursor: pointer; font: inherit; font-weight: 600; color: #fff; background: linear-gradient(135deg, var(--rose), var(--violet)); }
+  .carte audio { width: calc(100% - 72px); margin-top: 12px; display: block; }
   .sign { margin-top: 14px; font-size: .86rem; color: var(--doux); }
   .sign b { color: var(--encre); }
   .actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 12px; }
@@ -181,9 +188,15 @@
     <h2>Dépose ta pépite ✦</h2>
     <label class="boite" for="texte" style="display:block">
       <div class="question">Qu'as-tu envie de nous transmettre aujourd'hui ?</div>
-      <textarea id="texte" maxlength="2000" placeholder="Une anecdote, une découverte, une erreur, un souvenir, une réflexion… Même quelque chose de tout simple." required></textarea>
+      <textarea id="texte" maxlength="2000" placeholder="Une anecdote, une découverte, une erreur, un souvenir, une réflexion… Même quelque chose de tout simple."></textarea>
     </label>
     <div class="compteur" id="compteur"></div>
+    <div class="vocal-zone">
+      <label class="vocal-btn" for="vocalFichier">🎙️ Joindre une note vocale</label>
+      <input id="vocalFichier" type="file" accept="audio/*,.m4a,.mp3,.aac,.wav,.ogg,.webm,.mp4" hidden />
+      <span id="vocalPris"></span>
+      <p class="vocal-aide">Enregistre-toi avec l'app <b>Dictaphone</b> (ou Mémos vocaux) de ton téléphone, puis choisis le fichier ici. 3 minutes max.</p>
+    </div>
     <div class="ligne">
       <input id="lienSaisi" type="text" inputmode="url" autocapitalize="off" maxlength="500" placeholder="🔗 Un lien pour creuser (facultatif)" />
       <button class="btn" id="envoyer">Transmettre ✦</button>
@@ -306,7 +319,7 @@ const CATALOGUE = {
 const S = {
   enLigne: new Set(),
   db: null, user: null, uid: null, canWrite: true,
-  pepites: [], actions: {}, noms: {}, commentaires: [], brouillons: {},
+  pepites: [], actions: {}, noms: {}, commentaires: [], brouillons: {}, vocal: null, ouvertsVocaux: new Set(),
   charge: false, lent: false, erreur: null, onglet: "decouvrir",
 };
 const $ = (s) => document.querySelector(s);
@@ -458,7 +471,10 @@ function carte(p) {
   else if (S.canWrite) fin = `<button class="merci ${appris ? "done" : ""}" data-learn="${esc(p.id)}">${appris ? "✓ Appris, merci" : "J'ai appris ✦"}</button>`;
   return `<article class="carte">
     <div class="tampon">${svgMonument(lieu?.monument || "maison")}<span>${esc(lieu?.ville || "Famille")}</span></div>
-    <p class="texte">${avecLiens(p.texte)}</p>
+    ${p.texte ? `<p class="texte">${avecLiens(p.texte)}</p>` : ""}
+    ${p.vocal ? (S.ouvertsVocaux.has(p.id) && cacheVocal[p.vocal.id]
+      ? `<audio controls preload="auto" data-vocal="${esc(p.id)}" src="${cacheVocal[p.vocal.id]}"></audio>`
+      : `<button class="ecoute" data-ecoute="${esc(p.id)}">▶︎ Écouter la note vocale${p.vocal.duree ? " · " + fmtDuree(p.vocal.duree) : ""}</button>`) : ""}
     ${lien ? `<a class="lien" href="${esc(lien)}" target="_blank" rel="noopener">🔗 ${esc(new URL(lien).hostname.replace(/^www\./, ""))}</a>` : ""}
     <div class="sign">${avatar(p.auteur, "mini")}<b>${esc(nom(p.auteur))}</b>${quand ? ", le " + quand : ""}${qui.length ? ` · appris par ${esc(qui.map(nom).join(", "))}` : ""}</div>
     <div class="actions">${reacts}${fin}</div>
@@ -493,6 +509,7 @@ function render() {
     ? `<div class="note">Tu peux lire le fil, mais pas encore écrire. Demande à la personne qui t'a envoyé le lien de t'inviter par e-mail comme <b>Éditeur</b>.</div>` : "";
 
   const liste = $("#liste");
+  const lecteurs = new Map([...liste.querySelectorAll("audio[data-vocal]")].map((x) => [x.dataset.vocal, x]));
   const actif = document.activeElement?.dataset?.com;
   const curseur = actif ? document.activeElement.selectionStart : null;
   if (S.erreur) { liste.innerHTML = `<div class="vide">${esc(S.erreur)}</div>`; return; }
@@ -514,6 +531,8 @@ function render() {
   } else {
     liste.innerHTML = S.pepites.length ? S.pepites.map(carte).join("") : `<div class="vide">Le trésor est encore vide ✦</div>`;
   }
+  // Garder les lecteurs audio existants (pour ne pas couper une écoute en cours)
+  liste.querySelectorAll("audio[data-vocal]").forEach((n) => { const ancien = lecteurs.get(n.dataset.vocal); if (ancien) n.replaceWith(ancien); });
   if (actif) {
     const el = [...liste.querySelectorAll("[data-com]")].find((x) => x.dataset.com === actif);
     if (el) { el.focus({ preventScroll: true }); try { el.setSelectionRange(curseur, curseur); } catch {} }
@@ -543,8 +562,8 @@ $("#ecrire").onsubmit = async (e) => {
   e.preventDefault();
   const texte = $("#texte").value.trim();
   const brut = $("#lienSaisi").value.trim();
-  if (!texte) return;
-  if (longueurUtile(texte) < MIN_MOTS) {
+  if (!texte && !S.vocal) { toast("Écris quelques mots ou joins une note vocale ✦"); return; }
+  if (!S.vocal && longueurUtile(texte) < MIN_MOTS) {
     toast(/https?:\/\//i.test(texte) || brut ? "Un lien tout seul, c'est un peu sec 😉 Dis-nous ce que tu en as retenu !" : "Encore quelques mots pour que ce soit une vraie pépite ✦");
     $("#texte").focus(); return;
   }
@@ -553,22 +572,86 @@ $("#ecrire").onsubmit = async (e) => {
   const btn = $("#envoyer"); btn.disabled = true;
   try {
     const lieu = moi().lieu;
+    const vocal = S.vocal ? await envoyerVocal(S.vocal) : null;
     await S.db.collection("pepites").add({
       texte: texte.slice(0, 2000), lien: lien || "", auteur: S.uid, date: new Date().toISOString(),
-      lieu: lieu ? { ville: lieu.ville, monument: lieu.monument } : null,
+      lieu: lieu ? { ville: lieu.ville, monument: lieu.monument } : null, vocal,
     });
-    $("#texte").value = ""; $("#lienSaisi").value = ""; majCompteur();
+    $("#texte").value = ""; $("#lienSaisi").value = ""; S.vocal = null; $("#vocalFichier").value = ""; majVocalPris();
     toast("Pépite transmise ✦ +3 ⭐"); S.onglet = "fil"; render();
   } catch (err) {
     if (err?.code === "invalid_argument") { S.canWrite = false; render(); }
     else toast(err?.code === "quota_exceeded" ? "Le fil est plein." : "Pas pu partager, réessaie.");
   }
-  btn.disabled = false;
+  btn.disabled = false; btn.textContent = "Transmettre ✦";
 };
 
 function majCompteur() {
   const t = $("#texte").value, n = longueurUtile(t);
-  $("#compteur").textContent = !t.trim() ? "" : n < MIN_MOTS ? `Encore ${MIN_MOTS - n} caractères de ta plume ✍️` : "Parfait ✦";
+  $("#compteur").textContent = S.vocal ? "🎙️ Note vocale jointe : le texte est facultatif ✦"
+    : !t.trim() ? "" : n < MIN_MOTS ? `Encore ${MIN_MOTS - n} caractères de ta plume ✍️` : "Parfait ✦";
+}
+
+// ---------- Notes vocales ----------
+// Le son est rangé dans la base, découpé en morceaux (base64) : vocaux/<id>-<n>
+const VOCAL_MAX = 3 * 1024 * 1024;      // 3 Mo ≈ 3 min avec Dictaphone
+const VOCAL_MORCEAU = 180000;           // caractères base64 par document
+const fmtDuree = (s) => (s && isFinite(s)) ? `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, "0")}` : "";
+function majVocalPris() {
+  $("#vocalPris").innerHTML = S.vocal ? `<span class="vocal-pris">🎧 ${esc(S.vocal.nom)}${S.vocal.duree ? " · " + fmtDuree(S.vocal.duree) : ""}<button type="button" id="vocalRetirer" title="Retirer">✕</button></span>` : "";
+  const r = $("#vocalRetirer"); if (r) r.onclick = () => { S.vocal = null; $("#vocalFichier").value = ""; majVocalPris(); majCompteur(); };
+  majCompteur();
+}
+function dureeAudio(blob) {
+  return new Promise((ok) => {
+    const a = new Audio(); const u = URL.createObjectURL(blob);
+    const fin = (d) => { URL.revokeObjectURL(u); ok(d); };
+    a.preload = "metadata"; a.onloadedmetadata = () => fin(a.duration); a.onerror = () => fin(null);
+    setTimeout(() => fin(undefined), 6000); a.src = u;
+  });
+}
+$("#vocalFichier").addEventListener("change", async (e) => {
+  const f = e.target.files?.[0]; if (!f) return;
+  if (f.size > VOCAL_MAX) { toast("Note trop longue : 3 minutes maximum 🙏"); e.target.value = ""; return; }
+  const d = await dureeAudio(f);
+  if (d === null) { toast("Ce format audio n'est pas lisible ici. Essaie avec l'app Dictaphone."); e.target.value = ""; return; }
+  S.vocal = { fichier: f, nom: f.name || "note vocale", duree: d || 0, type: f.type || "audio/mp4" };
+  majVocalPris();
+});
+function enBase64(blob) {
+  return new Promise((ok, ko) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(",")[1] || ""); r.onerror = ko; r.readAsDataURL(blob); });
+}
+async function envoyerVocal(v) {
+  const b64 = await enBase64(v.fichier);
+  const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  const n = Math.ceil(b64.length / VOCAL_MORCEAU);
+  for (let i = 0; i < n; i++) {
+    $("#envoyer").textContent = `Envoi ${i + 1}/${n}…`;
+    await S.db.doc(`vocaux/${id}-${i}`).set({ d: b64.slice(i * VOCAL_MORCEAU, (i + 1) * VOCAL_MORCEAU), auteur: S.uid });
+  }
+  return { id, parts: n, type: /^audio\/|^video\//.test(v.type) ? v.type : "audio/mp4", duree: Math.round(v.duree || 0) };
+}
+const cacheVocal = {};
+async function ecouter(btn) {
+  const p = S.pepites.find((x) => x.id === btn.dataset.ecoute); const v = p?.vocal;
+  if (!v || !/^[\w]+$/.test(v.id) || !(v.parts > 0 && v.parts <= 40)) return;
+  btn.disabled = true; btn.textContent = "⏳ Chargement…";
+  try {
+    if (!cacheVocal[v.id]) {
+      const morceaux = [];
+      for (let i = 0; i < v.parts; i++) {
+        const snap = await S.db.doc(`vocaux/${v.id}-${i}`).get();
+        if (!snap.exists) throw new Error("manquant");
+        morceaux.push(snap.data().d);
+      }
+      const bin = atob(morceaux.join("")); const octets = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) octets[i] = bin.charCodeAt(i);
+      cacheVocal[v.id] = URL.createObjectURL(new Blob([octets], { type: String(v.type || "audio/mp4") }));
+    }
+    S.ouvertsVocaux.add(p.id); render();
+    const a = [...document.querySelectorAll("audio[data-vocal]")].find((x) => x.dataset.vocal === p.id);
+    a?.play().catch(() => {});
+  } catch { btn.disabled = false; btn.textContent = "▶︎ Réessayer"; toast("La note vocale n'a pas pu être chargée."); }
 }
 $("#texte").addEventListener("input", majCompteur);
 
@@ -679,6 +762,7 @@ document.addEventListener("click", async (e) => {
   if (t.dataset.tab) { S.onglet = t.dataset.tab; render(); }
   if (t.dataset.lieu || t.id === "profilBtn") fenetreProfil(false);
   if (t.dataset.picker) choisirEmoji(t.dataset.picker);
+  if (t.dataset.ecoute) ecouter(t);
   if (t.dataset.react) {
     const { id, react } = t.dataset;
     ecrireMoi((m) => { const l = m.reactions[id] || []; m.reactions[id] = l.includes(react) ? l.filter((x) => x !== react) : [...l, react]; });
@@ -694,7 +778,11 @@ document.addEventListener("click", async (e) => {
   }
   if (t.dataset.del) {
     if (t.dataset.confirm) {
-      try { await S.db.doc("pepites/" + t.dataset.del).delete(); toast("Pépite supprimée"); } catch { toast("Pas pu supprimer."); }
+      try {
+        const p = S.pepites.find((x) => x.id === t.dataset.del);
+        await S.db.doc("pepites/" + t.dataset.del).delete(); toast("Pépite supprimée");
+        if (p?.vocal?.id && /^[\w]+$/.test(p.vocal.id)) for (let i = 0; i < Math.min(p.vocal.parts || 0, 40); i++) await S.db.doc(`vocaux/${p.vocal.id}-${i}`).delete().catch(() => {});
+      } catch { toast("Pas pu supprimer."); }
     } else { t.dataset.confirm = "1"; t.textContent = "Confirmer ?"; }
   }
 });
