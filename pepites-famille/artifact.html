@@ -61,6 +61,8 @@
   footer.origine .bareme { margin-top: 14px; font-size: .84rem; opacity: .8; }
   .membre .nom { font-weight: 700; font-size: .92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .membre .ville { font-size: .76rem; opacity: .8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gmt { display: inline-block; margin-top: 2px; padding: 3px 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,.4); font-size: .78rem; letter-spacing: .18em; font-weight: 700; }
+  .membre .dec { font-size: .66rem; opacity: .75; letter-spacing: .04em; }
   .membre .h { font-family: "Fraunces", serif; font-size: 1.05rem; margin-top: 2px; font-variant-numeric: tabular-nums; }
   .membre .ici { font-size: .74rem; color: var(--or); margin-top: 4px; }
 
@@ -126,6 +128,7 @@
   <header>
     <div class="marque">✦ Pépites de Famille ✦</div>
     <div class="heure" id="heure">--:--</div>
+    <div class="gmt" title="Heure de référence commune à toute la famille">HEURE GMT</div>
     <div class="date" id="date"></div>
     <div class="salut" id="salut"></div>
     <div class="salut-ar" id="salut-ar" dir="rtl" lang="ar"></div>
@@ -233,6 +236,14 @@ function heureA(tz, opts = {}) {
   try { return new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: tz || undefined, ...opts }).format(new Date()); }
   catch { return new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit" }).format(new Date()); }
 }
+// Décalage par rapport à GMT, ex. "GMT+1"
+function decalage(tz) {
+  try {
+    const p = new Intl.DateTimeFormat("en-US", { timeZone: tz, timeZoneName: "shortOffset" }).formatToParts(new Date()).find((x) => x.type === "timeZoneName");
+    return p ? p.value.replace(/^GMT\+?0?$/, "GMT") : "";
+  } catch { return ""; }
+}
+// Salutation selon l'heure de l'appareil de chacun (donc son propre fuseau)
 function salutation() {
   const h = new Date().getHours();
   return h >= 5 && h < 17
@@ -241,9 +252,10 @@ function salutation() {
 }
 function tic() {
   const d = new Date();
-  $("#heure").innerHTML = `${heureA()}<span class="sec">${String(d.getSeconds()).padStart(2, "0")}</span>`;
-  $("#date").textContent = d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+  $("#heure").innerHTML = `${heureA("UTC")}<span class="sec">${String(d.getUTCSeconds()).padStart(2, "0")}</span>`;
+  $("#date").textContent = d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
   document.querySelectorAll("[data-tz]").forEach((el) => (el.textContent = heureA(el.dataset.tz)));
+  document.querySelectorAll("[data-dec]").forEach((el) => (el.textContent = decalage(el.dataset.dec)));
   const [fr, ar] = salutation();
   if ($("#salut").textContent !== fr) { $("#salut").textContent = fr; $("#salut-ar").textContent = ar; }
 }
@@ -320,7 +332,7 @@ function renderFamille() {
       ${avatar(id)}
       <div class="nom">${esc(nom(id))}</div>
       <div class="ville">${lieu ? esc(lieu.ville) : estMoi ? "&nbsp;" : "Quelque part"}</div>
-      ${lieu ? `<div class="h" data-tz="${esc(lieu.tz)}">${heureA(lieu.tz)}</div>` : ""}
+      ${lieu ? `<div class="h" data-tz="${esc(lieu.tz)}">${heureA(lieu.tz)}</div><div class="dec" data-dec="${esc(lieu.tz)}">${decalage(lieu.tz)}</div>` : ""}
       <div class="etoiles">⭐ ${e}</div>
       ${estMoi && S.canWrite ? `<div class="ici">✎ Mon profil</div>` : ""}`;
     return `<div class="membre ${estMoi ? "moi" : ""}">${estMoi && S.canWrite ? `<button data-lieu="1" title="Modifier mon profil">${contenu}</button>` : contenu}</div>`;
