@@ -399,9 +399,10 @@ function blocQuestion(q, { grande = false } = {}) {
   } else {
     const cle = "rep:" + q.id;
     const valeur = S.brouillons[cle] ?? (mienne ? mienne.texte : "");
-    const form = S.canWrite ? `<form class="rep-form" data-qid="${esc(q.id)}">
+    const form = S.canWrite && !mienne ? `<form class="rep-form" data-qid="${esc(q.id)}">
         <textarea data-com="${esc(cle)}" maxlength="2000" placeholder="Réponds avec tes propres mots…">${esc(valeur)}</textarea>
-        <button class="btn">${mienne ? "Modifier ma réponse" : "Répondre ✦"}</button></form>` : "";
+        <button class="btn">Répondre ✦</button>
+        <p class="vocal-aide" style="margin:6px 2px 0;text-align:center">Prends ton temps : une fois envoyée, ta réponse ne peut plus être modifiée.</p></form>` : "";
     const autres = reps.filter((r) => r.auteur !== S.uid);
     const liste = (mienne || !S.canWrite)
       ? reps.map((r) => `<div class="reponse">${avatar(r.auteur, "mini")}<div class="bulle"><b>${esc(nom(r.auteur))}</b><br>${avecLiens(r.texte)}</div></div>`).join("")
@@ -789,6 +790,7 @@ document.addEventListener("submit", async (e) => {
     const qid = rf.dataset.qid, ta = rf.querySelector("textarea"), texte = ta.value.trim().slice(0, 2000);
     if (texte.length < 3) { toast("Écris quelques mots ✦"); return; }
     const avant = maReponse(qid);
+    if (avant) { toast("Tu as déjà répondu à cette question ✦"); return; }
     try {
       await S.db.doc(`reponses/${qid}--${S.uid}`).set({ qid, texte, auteur: S.uid, date: avant?.date || new Date().toISOString(), modifie: avant ? new Date().toISOString() : null });
       delete S.brouillons["rep:" + qid];
