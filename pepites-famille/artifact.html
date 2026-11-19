@@ -417,7 +417,8 @@ function blocQuestion(q, { grande = false } = {}) {
 function rendreQuestions() {
   const n = jourGMT();
   const precedentes = [];
-  for (let k = 1; k <= 14; k++) { const q = questionDuJour(n - k); if (q && (k <= 3 || reponsesA(q.id).length)) precedentes.push(q); }
+  // Toujours les 3 derniers jours (en plus de la question du jour)
+  for (let k = 1; k <= 3; k++) { const q = questionDuJour(n - k); if (q) precedentes.push(q); }
   const proposees = S.questions;
   const qdj = questionDuJour(n);
   return (qdj ? blocQuestion(qdj, { grande: true })
@@ -427,7 +428,7 @@ function rendreQuestions() {
         <div class="proposer" style="margin-top:8px"><input id="nouvelleQ" maxlength="200" placeholder="Propose une question à la famille…" data-com="nouvelleQ" value="${esc(S.brouillons.nouvelleQ || "")}" />
         <button class="btn">Proposer</button></div></form>` : "")
     + (proposees.length ? `<div class="titre-section">💬 Les questions de la famille</div>` + proposees.map((q) => blocQuestion(q)).join("") : "")
-    + (precedentes.length ? `<div class="titre-section">🗓️ Les jours précédents</div>` + precedentes.map((q) => blocQuestion(q)).join("") : "");
+    + (precedentes.length ? `<div class="titre-section">🗓️ Les 3 derniers jours</div>` + precedentes.map((q) => blocQuestion(q)).join("") : "");
 }
 
 // ---------- Nouveautés depuis la dernière visite ----------
