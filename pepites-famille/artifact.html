@@ -333,7 +333,6 @@ const BANQUE = [
   "Qu'est-ce que tu aurais aimé que tes parents te disent plus souvent ?",
   "Qu'est-ce que tu aimerais que les autres comprennent mieux chez toi ?",
   "Quel rêve as-tu mis de côté, et pourquoi ?",
-  "Sur quel sujet as-tu changé d'avis ces dernières années ?",
   "Qu'est-ce qui te rend heureux(se) et qui ne coûte rien ?",
   "Quel souvenir d'enfance revient le plus souvent dans ta tête ?",
   "Qu'est-ce qu'une vie réussie, pour toi ?",
@@ -380,10 +379,11 @@ const BANQUE = [
 ];
 const jourGMT = (d = new Date()) => Math.floor(d.getTime() / 86400000);
 const dateDuJour = (n) => new Date(n * 86400000).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
-// Les questions démarrent le 20 novembre 2026 (jour GMT 20777) ; rien avant.
-const DEBUT_QUESTIONS = 20777;
+// Première question le 19 novembre 2026 (jour GMT 20776), puis la banque dans l'ordre à partir du lendemain.
+const DEBUT_QUESTIONS = 20776;
+const QUESTION_OUVERTURE = "Sur quel sujet as-tu changé d'avis ces dernières années ?";
 const questionDuJour = (n = jourGMT()) => n < DEBUT_QUESTIONS ? null
-  : ({ id: "j" + n, texte: BANQUE[(n - DEBUT_QUESTIONS) % BANQUE.length], jour: n });
+  : ({ id: "j" + n, texte: n === DEBUT_QUESTIONS ? QUESTION_OUVERTURE : BANQUE[(n - DEBUT_QUESTIONS - 1) % BANQUE.length], jour: n });
 const reponsesA = (qid) => S.reponses.filter((r) => r.qid === qid);
 const maReponse = (qid) => S.reponses.find((r) => r.qid === qid && r.auteur === S.uid);
 
@@ -654,7 +654,7 @@ function carte(p) {
   const qui = apprisPar(p.id);
   const quand = p.date ? new Date(p.date).toLocaleDateString("fr-FR", { day: "numeric", month: "long" }) : "";
   let fin = "";
-  if (p.auteur === S.uid) fin = S.canWrite ? `<button class="del" data-edit="${esc(p.id)}">✏️ Modifier</button><button class="del" data-del="${esc(p.id)}" style="margin-left:0">Supprimer</button>` : "";
+  if (p.auteur === S.uid) fin = S.canWrite ? `<button class="del" data-del="${esc(p.id)}">Supprimer</button>` : "";
   else if (S.canWrite) fin = `<button class="merci ${appris ? "done" : ""}" data-learn="${esc(p.id)}">${appris ? "✓ Appris, merci" : "J'ai appris ✦"}</button>`;
   const estNouvelle = S.uid && p.auteur !== S.uid && !appris;
   const dateLongue = p.date ? new Date(p.date).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" }) : "";
