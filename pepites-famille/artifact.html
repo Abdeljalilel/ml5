@@ -102,6 +102,7 @@
   /* ---------- Onglets ---------- */
   .onglets { display: flex; gap: 8px; margin: 26px 0 14px; }
   .onglets button { flex: 1; border: 1px solid var(--bord); background: var(--verre); color: var(--creme); border-radius: 999px; padding: 10px; font: inherit; font-weight: 500; cursor: pointer; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+  .onglets button { white-space: nowrap; padding: 10px 4px; font-size: .92rem; }
   .onglets button.on { background: var(--creme); color: var(--encre); border-color: var(--creme); }
   .aide-onglet { text-align: center; font-size: .9rem; margin: -4px 8px 16px; opacity: .92; text-shadow: 0 1px 8px rgba(0,0,0,.4); position: relative; z-index: 1; }
   .emojis-grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); gap: 2px; max-height: 46vh; overflow: auto; margin-top: 6px; }
@@ -113,6 +114,28 @@
   .onglets .n { display: inline-block; min-width: 20px; padding: 0 6px; border-radius: 999px; background: var(--rose); color: #fff; font-size: .78rem; margin-left: 4px; }
 
   /* ---------- Cartes postales ---------- */
+  .bandeau { position: relative; z-index: 1; display: flex; align-items: center; gap: 10px; margin: 18px 0 0; padding: 12px 14px; border-radius: 16px; background: rgba(255,248,239,.16); border: 1px solid rgba(246,193,119,.55); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); font-size: .94rem; line-height: 1.4; }
+  .bandeau .txt { flex: 1; }
+  .bandeau b { color: var(--or); }
+  .bandeau button { border: 0; background: none; color: inherit; cursor: pointer; font: inherit; }
+  .bandeau .go { background: var(--creme); color: var(--encre); border-radius: 999px; padding: 7px 12px; font-weight: 700; font-size: .85rem; white-space: nowrap; }
+  .bandeau .x { opacity: .7; font-size: 1.1rem; padding: 0 4px; }
+  .ruban { display: inline-block; background: linear-gradient(135deg, var(--rose), var(--violet)); color: #fff; font-size: .68rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; padding: 3px 9px; border-radius: 999px; margin-bottom: 8px; }
+  .qcarte { text-align: left; }
+  .qcarte .surtitre { font-size: .74rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #b4566c; }
+  .qcarte h3 { font-family: "Fraunces", serif; font-style: italic; font-weight: 600; font-size: 1.35rem; line-height: 1.35; margin: 8px 0 12px; }
+  .qcarte.petite h3 { font-size: 1.1rem; margin: 6px 0 8px; }
+  .qcarte .par { font-size: .8rem; color: var(--doux); }
+  .rep-form textarea { min-height: 80px; font-family: "DM Sans", sans-serif; font-size: 1rem; }
+  .rep-form .btn { margin-top: 8px; width: 100%; }
+  .secret { margin-top: 12px; padding: 12px 14px; border-radius: 14px; background: #f6ecdc; font-size: .9rem; color: var(--doux); text-align: center; }
+  .reponse { display: flex; gap: 8px; align-items: flex-start; margin-top: 12px; }
+  .reponse .bulle { background: #f6ecdc; border-radius: 4px 14px 14px 14px; padding: 9px 13px; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; flex: 1; }
+  .reponse .mini { flex: 0 0 auto; margin: 2px 0 0; }
+  .ouvrir { border: 1px solid #ecdfcb; background: #fff; border-radius: 999px; padding: 7px 13px; cursor: pointer; font: inherit; font-size: .88rem; color: var(--encre); }
+  .proposer { display: flex; gap: 8px; }
+  .proposer input { flex: 1; }
+  .titre-section { font-family: "Fraunces", serif; font-size: 1.15rem; color: var(--or); margin: 26px 4px 12px; text-shadow: 0 2px 10px rgba(0,0,0,.4); position: relative; z-index: 1; }
   .carte { position: relative; background: var(--creme); color: var(--encre); border-radius: 6px 22px 22px 22px; padding: 22px 22px 16px; margin-bottom: 18px; box-shadow: 0 16px 40px rgba(0,0,0,.28); }
   .carte:nth-child(odd) { transform: rotate(-.4deg); }
   .carte:nth-child(even) { transform: rotate(.35deg); }
@@ -206,9 +229,12 @@
 
   <div id="note"></div>
 
+  <div id="nouveautes"></div>
+  <div id="qdjBandeau"></div>
   <nav class="onglets" id="onglets" hidden>
     <button data-tab="decouvrir" class="on">🆕 À lire<span class="n" id="nb" hidden></span></button>
-    <button data-tab="fil">📚 Toutes les pépites</button>
+    <button data-tab="fil">📚 Toutes</button>
+    <button data-tab="questions">💭 Questions<span class="n" id="nbq" hidden>1</span></button>
   </nav>
   <p class="aide-onglet" id="aideOnglet" hidden></p>
 
@@ -256,6 +282,129 @@ const MONUMENTS = {
   maison:   { nom: "Maison", d: "M7 54V30L20 17l13 13v24zM16 54V42h8v12M3 32 20 15l17 17M27 22v-6h4v10" },
   palmier:  { nom: "Palmier", d: "M20 54q-2-20 2-34M22 20q-8-6-16-2M22 20q8-7 16-3M22 20q-4-10-12-12M22 20q5-10 13-11M22 20q0-8-2-14M8 54h26" },
 };
+// ---------- Questions & réflexions ----------
+// Une question par jour (la même pour tout le monde, selon la date GMT). On répond avec ses mots.
+const BANQUE = [
+  "Quel conseil donnerais-tu à la personne que tu étais à 20 ans ?",
+  "Quel moment de ta vie a complètement changé ta façon de voir les choses ?",
+  "De quoi es-tu fier(e), sans jamais l'avoir vraiment dit ?",
+  "Quelle croyance avais-tu plus jeune, et que tu as abandonnée depuis ?",
+  "Qu'est-ce que notre famille fait « parce que ça s'est toujours fait », et que tu remettrais en question ?",
+  "Quelle valeur d'une autre culture que la nôtre aimerais-tu adopter ?",
+  "Quelle est la plus belle erreur que tu aies faite ?",
+  "Si tu pouvais revivre une seule journée de ta vie, laquelle choisirais-tu ?",
+  "Qu'est-ce qui te fait vraiment peur, au fond ?",
+  "Quelle personne, hors de la famille, t'a le plus appris sans le savoir ?",
+  "Qu'est-ce que l'argent t'a appris, en bien comme en mal ?",
+  "Quel est le meilleur conseil qu'on t'ait donné, et qui te l'a donné ?",
+  "À quel moment t'es-tu senti(e) le plus libre ?",
+  "Qu'est-ce que tu aurais aimé que tes parents te disent plus souvent ?",
+  "Qu'est-ce que tu aimerais que les autres comprennent mieux chez toi ?",
+  "Quel rêve as-tu mis de côté, et pourquoi ?",
+  "Sur quel sujet as-tu changé d'avis ces dernières années ?",
+  "Qu'est-ce qui te rend heureux(se) et qui ne coûte rien ?",
+  "Quel souvenir d'enfance revient le plus souvent dans ta tête ?",
+  "Qu'est-ce qu'une vie réussie, pour toi ?",
+  "Quelle habitude a le plus amélioré ta vie ?",
+  "De quoi as-tu manqué, plus jeune, et qui t'a rendu(e) plus fort(e) ?",
+  "Si tu devais transmettre une seule règle de vie à tes petits-enfants, laquelle ?",
+  "Qu'est-ce que tu pardonnes facilement, et qu'est-ce que tu ne pardonnes pas ?",
+  "Quelle question n'as-tu jamais osé poser à quelqu'un de la famille ?",
+  "Quelle décision difficile es-tu content(e) d'avoir prise ?",
+  "Qu'est-ce que le temps qui passe t'a appris ?",
+  "Qu'est-ce que tu ferais si tu étais sûr(e) de ne pas échouer ?",
+  "Quel est ton plus grand regret, et qu'en as-tu tiré ?",
+  "Quand t'es-tu senti(e) le plus fier(e) de quelqu'un de la famille ?",
+  "Qu'est-ce que tu as compris trop tard ?",
+  "Quelle est la chose la plus courageuse que tu aies faite ?",
+  "Qu'est-ce qui, selon toi, rend une amitié solide ?",
+  "Qu'est-ce que tu aimerais apprendre avant la fin de ta vie ?",
+  "Quelle phrase entendue un jour ne t'a jamais quitté(e) ?",
+  "Qu'est-ce que la réussite sociale ne t'apportera jamais ?",
+  "Qu'est-ce que tu ferais différemment si tu élevais des enfants aujourd'hui ?",
+  "Qu'est-ce qui te met en colère dans le monde d'aujourd'hui ?",
+  "Qu'est-ce qui te rend optimiste pour l'avenir ?",
+  "Quel livre, film ou chanson a changé quelque chose en toi ?",
+  "Que signifie « être une bonne personne » pour toi ?",
+  "Quelle tradition familiale voudrais-tu absolument garder ?",
+  "Quelle tradition familiale aimerais-tu voir changer ?",
+  "Comment sais-tu que tu as pris la bonne décision ?",
+  "Qu'est-ce que tu fais quand tout va mal ?",
+  "Qu'est-ce que tu as appris de tes propres parents sans qu'ils te l'expliquent ?",
+  "Qu'est-ce que tu n'as jamais dit à quelqu'un de la famille et que tu aimerais lui dire ?",
+  "Qu'est-ce qui compte le plus pour toi aujourd'hui, et qui ne comptait pas il y a 10 ans ?",
+  "Quel compromis refuserais-tu toujours de faire ?",
+  "Qu'est-ce que ta génération a compris que la nôtre (ou la vôtre) n'a pas compris ?",
+  "Qu'est-ce que la foi, la spiritualité ou le sens de la vie représentent pour toi ?",
+  "Si tu pouvais dîner avec n'importe qui, mort ou vivant, qui choisirais-tu et que lui demanderais-tu ?",
+  "Quel petit plaisir te sauve une mauvaise journée ?",
+  "Qu'est-ce que tu as appris en voyageant ou en vivant ailleurs ?",
+  "Quelle est la plus grande leçon que l'échec t'ait donnée ?",
+  "À quoi ressemble ta journée idéale ?",
+  "Qu'est-ce que tu aimerais qu'on dise de toi plus tard ?",
+  "Qu'est-ce qui te donne de l'énergie, et qu'est-ce qui t'en prend ?",
+  "Quel est le moment le plus drôle que tu aies vécu en famille ?",
+  "Qu'est-ce qui t'a surpris(e) en devenant adulte ?",
+];
+const jourGMT = (d = new Date()) => Math.floor(d.getTime() / 86400000);
+const dateDuJour = (n) => new Date(n * 86400000).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
+const questionDuJour = (n = jourGMT()) => ({ id: "j" + n, texte: BANQUE[((n % BANQUE.length) + BANQUE.length) % BANQUE.length], jour: n });
+const reponsesA = (qid) => S.reponses.filter((r) => r.qid === qid);
+const maReponse = (qid) => S.reponses.find((r) => r.qid === qid && r.auteur === S.uid);
+
+function blocQuestion(q, { grande = false } = {}) {
+  const reps = reponsesA(q.id);
+  const mienne = maReponse(q.id);
+  const ouvert = grande || S.questionsOuvertes.has(q.id);
+  const surtitre = q.jour !== undefined ? (q.jour === jourGMT() ? "✦ La question du jour" : "Question du " + dateDuJour(q.jour))
+    : "Question proposée par " + nom(q.auteur);
+  let corps = "";
+  if (!ouvert) {
+    corps = `<button class="ouvrir" data-ouvrirq="${esc(q.id)}">${mienne ? "Voir les réponses" : "Répondre"} · ${reps.length} réponse${reps.length > 1 ? "s" : ""}</button>`;
+  } else {
+    const cle = "rep:" + q.id;
+    const valeur = S.brouillons[cle] ?? (mienne ? mienne.texte : "");
+    const form = S.canWrite ? `<form class="rep-form" data-qid="${esc(q.id)}">
+        <textarea data-com="${esc(cle)}" maxlength="2000" placeholder="Réponds avec tes propres mots…">${esc(valeur)}</textarea>
+        <button class="btn">${mienne ? "Modifier ma réponse" : "Répondre ✦"}</button></form>` : "";
+    const autres = reps.filter((r) => r.auteur !== S.uid);
+    const liste = (mienne || !S.canWrite)
+      ? reps.map((r) => `<div class="reponse">${avatar(r.auteur, "mini")}<div class="bulle"><b>${esc(nom(r.auteur))}</b><br>${avecLiens(r.texte)}</div></div>`).join("")
+        || `<div class="secret">Tu es la première personne à répondre ✦</div>`
+      : `<div class="secret">${autres.length ? `🔒 ${autres.length} personne${autres.length > 1 ? "s ont" : " a"} déjà répondu. Réponds pour découvrir leurs mots ✦` : "Personne n'a encore répondu : à toi d'ouvrir la discussion ✦"}</div>`;
+    corps = form + liste;
+  }
+  const suppr = q.auteur === S.uid && q.jour === undefined && S.canWrite ? `<button class="del" data-delq="${esc(q.id)}" style="float:right;border:0;background:none;color:var(--doux);cursor:pointer;font-size:.8rem">Supprimer</button>` : "";
+  return `<article class="carte qcarte ${grande ? "" : "petite"}">${suppr}<div class="surtitre">${esc(surtitre)}</div><h3>${esc(q.texte)}</h3>${corps}</article>`;
+}
+
+function rendreQuestions() {
+  const n = jourGMT();
+  const precedentes = [];
+  for (let k = 1; k <= 14; k++) { const q = questionDuJour(n - k); if (k <= 3 || reponsesA(q.id).length) precedentes.push(q); }
+  const proposees = S.questions;
+  return blocQuestion(questionDuJour(n), { grande: true })
+    + (S.canWrite ? `<form class="carte proposer-carte" id="proposerQ" style="padding:16px 18px">
+        <div class="qcarte"><div class="surtitre">Une question te trotte dans la tête ?</div></div>
+        <div class="proposer" style="margin-top:8px"><input id="nouvelleQ" maxlength="200" placeholder="Propose une question à la famille…" data-com="nouvelleQ" value="${esc(S.brouillons.nouvelleQ || "")}" />
+        <button class="btn">Proposer</button></div></form>` : "")
+    + (proposees.length ? `<div class="titre-section">💬 Les questions de la famille</div>` + proposees.map((q) => blocQuestion(q)).join("") : "")
+    + `<div class="titre-section">🗓️ Les jours précédents</div>` + precedentes.map((q) => blocQuestion(q)).join("");
+}
+
+// ---------- Nouveautés depuis la dernière visite ----------
+function nouveautes() {
+  const t = S.passagePrecedent; if (!t) return null;
+  const autre = (x) => x.auteur && x.auteur !== S.uid && String(x.date || "") > t;
+  return { pepites: S.pepites.filter(autre).length, commentaires: S.commentaires.filter(autre).length, reponses: S.reponses.filter(autre).length, questions: S.questions.filter(autre).length };
+}
+let nonVus = 0;
+function signaler(msg) {
+  toast(msg);
+  if (document.hidden) { nonVus++; document.title = `(${nonVus}) Pépites de Famille`; }
+}
+document.addEventListener("visibilitychange", () => { if (!document.hidden) { nonVus = 0; document.title = "Pépites de Famille"; } });
+
 const RABAT = ["mausolee", "oudayas", "m6", "hassan"]; // affichés en premier
 const VILLES = [
   ["Paris", "Europe/Paris", "eiffel"], ["Lyon", "Europe/Paris", "ville"], ["Marseille", "Europe/Paris", "sagrada"],
@@ -319,7 +468,7 @@ const CATALOGUE = {
 const S = {
   enLigne: new Set(),
   db: null, user: null, uid: null, canWrite: true,
-  pepites: [], actions: {}, noms: {}, commentaires: [], brouillons: {}, vocal: null, ouvertsVocaux: new Set(),
+  pepites: [], actions: {}, noms: {}, commentaires: [], brouillons: {}, reponses: [], questions: [], questionsOuvertes: new Set(), passagePrecedent: null, nouveautesFermees: false, vocal: null, ouvertsVocaux: new Set(),
   charge: false, lent: false, erreur: null, onglet: "decouvrir",
 };
 const $ = (s) => document.querySelector(s);
@@ -408,7 +557,8 @@ function serie() {
 // Étoiles : +3 par pépite transmise, +1 chaque fois que quelqu'un d'autre apprend grâce à toi
 function etoiles(uid) {
   const miennes = S.pepites.filter((p) => p.auteur === uid);
-  return miennes.length * 3 + miennes.reduce((n, p) => n + apprisPar(p.id).filter((u) => u !== uid).length, 0);
+  return miennes.length * 3 + miennes.reduce((n, p) => n + apprisPar(p.id).filter((u) => u !== uid).length, 0)
+    + S.reponses.filter((r) => r.auteur === uid).length;
 }
 function roi(ids) {
   let best = null, max = 0;
@@ -441,7 +591,7 @@ function renderFamille() {
       <div class="nom" title="${esc(lieu ? lieu.ville : "")}">${esc(nom(id))}</div>
       <div class="ville">${lieu ? esc(lieu.ville) : estMoi ? "&nbsp;" : "Quelque part"}</div>
       ${lieu ? `<div class="h" data-tz="${esc(lieu.tz)}">${heureA(lieu.tz)}</div><div class="dec" data-dec="${esc(lieu.tz)}">${decalage(lieu.tz)}</div>` : ""}
-      <div class="etoiles" title="⭐ +3 par pépite transmise · +1 chaque fois que quelqu'un apprend grâce à toi">⭐ ${e}</div>
+      <div class="etoiles" title="⭐ +3 par pépite transmise · +1 chaque fois que quelqu'un apprend grâce à toi · +1 par réponse à une question">⭐ ${e}</div>
       ${estMoi && S.canWrite ? `<div class="ici">✎ Mon profil</div>` : ""}`;
     return `<div class="membre ${estMoi ? "moi" : ""}" title="${esc(nom(id) + (lieu ? " · " + lieu.ville : ""))}">${contenu}</div>`;
   }).join("");
@@ -469,7 +619,8 @@ function carte(p) {
   let fin = "";
   if (p.auteur === S.uid) fin = S.canWrite ? `<button class="del" data-del="${esc(p.id)}">Supprimer</button>` : "";
   else if (S.canWrite) fin = `<button class="merci ${appris ? "done" : ""}" data-learn="${esc(p.id)}">${appris ? "✓ Appris, merci" : "J'ai appris ✦"}</button>`;
-  return `<article class="carte">
+  const estNouvelle = S.passagePrecedent && p.auteur !== S.uid && String(p.date || "") > S.passagePrecedent;
+  return `<article class="carte">${estNouvelle ? `<span class="ruban">✨ Nouveau</span>` : ""}
     <div class="tampon">${svgMonument(lieu?.monument || "maison")}<span>${esc(lieu?.ville || "Famille")}</span></div>
     ${p.texte ? `<p class="texte">${avecLiens(p.texte)}</p>` : ""}
     ${p.vocal ? (S.ouvertsVocaux.has(p.id) && cacheVocal[p.vocal.id]
@@ -519,11 +670,32 @@ function render() {
   const restants = nouveaux.filter((p) => !moi().appris?.[p.id]).length;
   $("#nb").hidden = !restants; $("#nb").textContent = restants;
 
+  // Bandeau « depuis ta dernière visite »
+  const nv = nouveautes();
+  const morceaux = nv ? [
+    nv.pepites && `<b>${nv.pepites}</b> nouvelle${nv.pepites > 1 ? "s" : ""} pépite${nv.pepites > 1 ? "s" : ""}`,
+    nv.commentaires && `<b>${nv.commentaires}</b> commentaire${nv.commentaires > 1 ? "s" : ""}`,
+    nv.reponses && `<b>${nv.reponses}</b> réponse${nv.reponses > 1 ? "s" : ""} aux questions`,
+    nv.questions && `<b>${nv.questions}</b> nouvelle${nv.questions > 1 ? "s" : ""} question${nv.questions > 1 ? "s" : ""}`,
+  ].filter(Boolean) : [];
+  $("#nouveautes").innerHTML = morceaux.length && !S.nouveautesFermees
+    ? `<div class="bandeau"><span>🔔</span><span class="txt">Depuis ta dernière visite : ${morceaux.join(" · ")}</span><button class="x" data-fermernv="1" title="Fermer">✕</button></div>` : "";
+  // Bandeau question du jour
+  const qdj = questionDuJour();
+  const qdjRepondue = !!maReponse(qdj.id);
+  $("#nbq").hidden = qdjRepondue || !S.canWrite;
+  $("#qdjBandeau").innerHTML = S.onglet !== "questions" && !qdjRepondue && S.canWrite
+    ? `<div class="bandeau"><span>💭</span><span class="txt"><b>Question du jour :</b> ${esc(qdj.texte)}</span><button class="go" data-tab="questions">Répondre</button></div>` : "";
+
   const aide = $("#aideOnglet"); aide.hidden = false;
   aide.textContent = S.onglet === "decouvrir"
     ? "Les pépites de la famille que tu n'as pas encore lues. Clique sur « J'ai appris ✦ » et elles rejoignent toutes les autres."
+    : S.onglet === "questions"
+    ? "Une question par jour pour se découvrir autrement. Réponds avec tes mots : celles des autres s'affichent une fois que tu as répondu."
     : "Toutes les pépites partagées depuis le début, les tiennes comprises.";
-  if (S.onglet === "decouvrir") {
+  if (S.onglet === "questions") {
+    liste.innerHTML = rendreQuestions();
+  } else if (S.onglet === "decouvrir") {
     const s = serie();
     liste.innerHTML = nouveaux.length
       ? nouveaux.map(carte).join("") + (s ? `<div class="vide">🔥 ${s} jour${s > 1 ? "s" : ""} d'affilée à apprendre de ta famille</div>` : "")
@@ -542,6 +714,29 @@ function render() {
 // ---------- Commentaires ----------
 document.addEventListener("input", (e) => { const id = e.target.dataset?.com; if (id) S.brouillons[id] = e.target.value; });
 document.addEventListener("submit", async (e) => {
+  const rf = e.target.closest?.(".rep-form");
+  if (rf) {
+    e.preventDefault();
+    const qid = rf.dataset.qid, ta = rf.querySelector("textarea"), texte = ta.value.trim().slice(0, 2000);
+    if (texte.length < 3) { toast("Écris quelques mots ✦"); return; }
+    const avant = maReponse(qid);
+    try {
+      await S.db.doc(`reponses/${qid}--${S.uid}`).set({ qid, texte, auteur: S.uid, date: avant?.date || new Date().toISOString(), modifie: avant ? new Date().toISOString() : null });
+      delete S.brouillons["rep:" + qid];
+      toast(avant ? "Réponse modifiée ✦" : "Merci pour ta réponse ✦ +1 ⭐");
+    } catch (err) { toast(err?.code === "invalid_argument" ? "Tu ne peux pas encore écrire ici." : "Pas pu envoyer, réessaie."); }
+    return;
+  }
+  if (e.target.id === "proposerQ") {
+    e.preventDefault();
+    const texte = $("#nouvelleQ").value.trim().slice(0, 200);
+    if (texte.length < 10) { toast("Ta question est un peu courte 😉"); return; }
+    try {
+      await S.db.collection("questions").add({ texte: /[?？]$/.test(texte) ? texte : texte + " ?", auteur: S.uid, date: new Date().toISOString() });
+      delete S.brouillons.nouvelleQ; toast("Question proposée à la famille ✦"); render();
+    } catch { toast("Pas pu proposer la question, réessaie."); }
+    return;
+  }
   const f = e.target.closest?.(".com-form"); if (!f) return;
   e.preventDefault();
   const pid = f.dataset.pid, input = f.querySelector("input");
@@ -762,6 +957,12 @@ document.addEventListener("click", async (e) => {
   if (t.dataset.tab) { S.onglet = t.dataset.tab; render(); }
   if (t.dataset.lieu || t.id === "profilBtn") fenetreProfil(false);
   if (t.dataset.picker) choisirEmoji(t.dataset.picker);
+  if (t.dataset.ouvrirq) { S.questionsOuvertes.add(t.dataset.ouvrirq); render(); }
+  if (t.dataset.fermernv) { S.nouveautesFermees = true; render(); }
+  if (t.dataset.delq) {
+    if (t.dataset.confirm) { try { await S.db.doc("questions/" + t.dataset.delq).delete(); } catch { toast("Pas pu supprimer."); } }
+    else { t.dataset.confirm = "1"; t.textContent = "Confirmer ?"; }
+  }
   if (t.dataset.ecoute) ecouter(t);
   if (t.dataset.react) {
     const { id, react } = t.dataset;
@@ -813,9 +1014,30 @@ document.addEventListener("click", async (e) => {
     if (okP && okA) { S.charge = true; clearTimeout(timer); }
     render(); resoudreNoms();
     if (S.charge && S.canWrite && !moi().surnom && !demande) { demande = true; fenetreProfil(true); }
+    if (S.charge && !S.passageNote) {
+      S.passageNote = true;
+      S.passagePrecedent = moi().dernierPassage || null;
+      S.connus = new Set([...S.pepites.map((x) => x.id), ...S.commentaires.map((x) => x.id), ...S.reponses.map((x) => x.id), ...S.questions.map((x) => x.id)]);
+      if (S.canWrite && moi().surnom) ecrireMoi((m) => (m.dernierPassage = new Date().toISOString()));
+      render();
+    }
+  };
+  // Signale en direct ce qui arrive pendant que la page est ouverte
+  const nouveauxElements = (liste, quoi) => {
+    if (!S.connus) return;
+    liste.forEach((x) => {
+      if (S.connus.has(x.id)) return;
+      S.connus.add(x.id);
+      if (x.auteur === S.uid) return;
+      if (quoi === "pepite") signaler(`✨ Nouvelle pépite de ${nom(x.auteur)}`);
+      if (quoi === "commentaire") { const p = S.pepites.find((y) => y.id === x.pid); if (p && p.auteur === S.uid) signaler(`💬 ${nom(x.auteur)} a commenté ta pépite`); }
+      if (quoi === "reponse") signaler(`💭 ${nom(x.auteur)} a répondu à une question`);
+      if (quoi === "question") signaler(`💭 ${nom(x.auteur)} propose une nouvelle question`);
+    });
   };
   db.collection("pepites").orderBy("date", "desc").onSnapshot((snap) => {
     S.pepites = snap.docs.map((d) => ({ id: d.id, ...d.data() })).filter((p) => typeof p.texte === "string");
+    nouveauxElements(S.pepites, "pepite");
     if (!snap.metadata.fromCache) okP = true;
     pret();
   }, () => { clearTimeout(timer); S.erreur = "Impossible de charger le fil."; render(); });
@@ -823,6 +1045,19 @@ document.addEventListener("click", async (e) => {
     S.commentaires = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
       .filter((c) => typeof c.texte === "string" && typeof c.pid === "string")
       .sort((a, b) => String(a.date).localeCompare(String(b.date)));
+    nouveauxElements(S.commentaires, "commentaire");
+    render();
+  }, () => {});
+  db.collection("reponses").onSnapshot((snap) => {
+    S.reponses = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+      .filter((r) => typeof r.texte === "string" && typeof r.qid === "string" && typeof r.auteur === "string" )
+      .sort((a, b) => String(a.date).localeCompare(String(b.date)));
+    nouveauxElements(S.reponses, "reponse");
+    render();
+  }, () => {});
+  db.collection("questions").orderBy("date", "desc").onSnapshot((snap) => {
+    S.questions = snap.docs.map((d) => ({ id: d.id, ...d.data() })).filter((q) => typeof q.texte === "string" && q.texte.length <= 220);
+    nouveauxElements(S.questions, "question");
     render();
   }, () => {});
   db.collection("actions").onSnapshot((snap) => {
