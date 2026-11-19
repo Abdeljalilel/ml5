@@ -287,6 +287,20 @@ const MONUMENTS = {
 // ---------- Questions & réflexions ----------
 // Une question par jour (la même pour tout le monde, selon la date GMT). On répond avec ses mots.
 const BANQUE = [
+  "Si tu pouvais envoyer une lettre à toi-même il y a dix ans, quelle en serait la première phrase ?",
+  "Quelle version de toi n'a jamais eu la chance d'exister ?",
+  "Si tu pouvais garder un seul souvenir intact pour toujours, lequel protégerais-tu ?",
+  "Qu'est-ce que tu continues de faire uniquement par peur de décevoir ?",
+  "Si tu croisais l'enfant que tu étais, serait-il fier de toi ? Pourquoi ?",
+  "Quelle porte as-tu fermée trop vite dans ta vie ?",
+  "Si tu pouvais poser une seule question à la personne que tu seras dans 20 ans, laquelle ?",
+  "Qu'est-ce que tu cherches encore à prouver, et à qui ?",
+  "Si tu devais tout recommencer ailleurs demain, qu'emporterais-tu avec toi, au sens propre comme au figuré ?",
+  "Quelle conversation aimerais-tu avoir avant qu'il ne soit trop tard ?",
+  "Si le temps n'existait plus, à quoi passerais-tu tes journées ?",
+  "Quel rôle joues-tu dans la famille sans l'avoir vraiment choisi ?",
+  "Qu'as-tu abandonné en chemin et qui te manque aujourd'hui ?",
+  "Si tu pouvais échanger ta vie pendant une semaine avec quelqu'un de la famille, qui choisirais-tu, et pourquoi ?",
   "Qu'est-ce que tu fais pour les autres et que personne ne remarque ?",
   "Si tu pouvais faire disparaître une seule de tes peurs, laquelle choisirais-tu ?",
   "À quel moment as-tu été le plus toi-même ?",
@@ -363,24 +377,13 @@ const BANQUE = [
   "Qu'est-ce qui te donne de l'énergie, et qu'est-ce qui t'en prend ?",
   "Quel est le moment le plus drôle que tu aies vécu en famille ?",
   "Qu'est-ce qui t'a surpris(e) en devenant adulte ?",
-  "Si tu pouvais envoyer une lettre à toi-même il y a dix ans, quelle en serait la première phrase ?",
-  "Quelle version de toi n'a jamais eu la chance d'exister ?",
-  "Si tu pouvais garder un seul souvenir intact pour toujours, lequel protégerais-tu ?",
-  "Qu'est-ce que tu continues de faire uniquement par peur de décevoir ?",
-  "Si tu croisais l'enfant que tu étais, serait-il fier de toi ? Pourquoi ?",
-  "Quelle porte as-tu fermée trop vite dans ta vie ?",
-  "Si tu pouvais poser une seule question à la personne que tu seras dans 20 ans, laquelle ?",
-  "Qu'est-ce que tu cherches encore à prouver, et à qui ?",
-  "Si tu devais tout recommencer ailleurs demain, qu'emporterais-tu avec toi, au sens propre comme au figuré ?",
-  "Quelle conversation aimerais-tu avoir avant qu'il ne soit trop tard ?",
-  "Si le temps n'existait plus, à quoi passerais-tu tes journées ?",
-  "Quel rôle joues-tu dans la famille sans l'avoir vraiment choisi ?",
-  "Qu'as-tu abandonné en chemin et qui te manque aujourd'hui ?",
-  "Si tu pouvais échanger ta vie pendant une semaine avec quelqu'un de la famille, qui choisirais-tu, et pourquoi ?",
 ];
 const jourGMT = (d = new Date()) => Math.floor(d.getTime() / 86400000);
 const dateDuJour = (n) => new Date(n * 86400000).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
-const questionDuJour = (n = jourGMT()) => ({ id: "j" + n, texte: BANQUE[((n % BANQUE.length) + BANQUE.length) % BANQUE.length], jour: n });
+// Les questions démarrent le 20 novembre 2026 (jour GMT 20777) ; rien avant.
+const DEBUT_QUESTIONS = 20777;
+const questionDuJour = (n = jourGMT()) => n < DEBUT_QUESTIONS ? null
+  : ({ id: "j" + n, texte: BANQUE[(n - DEBUT_QUESTIONS) % BANQUE.length], jour: n });
 const reponsesA = (qid) => S.reponses.filter((r) => r.qid === qid);
 const maReponse = (qid) => S.reponses.find((r) => r.qid === qid && r.auteur === S.uid);
 
@@ -413,15 +416,17 @@ function blocQuestion(q, { grande = false } = {}) {
 function rendreQuestions() {
   const n = jourGMT();
   const precedentes = [];
-  for (let k = 1; k <= 14; k++) { const q = questionDuJour(n - k); if (k <= 3 || reponsesA(q.id).length) precedentes.push(q); }
+  for (let k = 1; k <= 14; k++) { const q = questionDuJour(n - k); if (q && (k <= 3 || reponsesA(q.id).length)) precedentes.push(q); }
   const proposees = S.questions;
-  return blocQuestion(questionDuJour(n), { grande: true })
+  const qdj = questionDuJour(n);
+  return (qdj ? blocQuestion(qdj, { grande: true })
+      : `<article class="carte qcarte"><div class="surtitre">✦ Bientôt</div><h3>La toute première question du jour arrive demain matin.</h3><p style="margin:0;color:var(--doux)">D'ici là, tu peux déjà proposer tes propres questions à la famille ✦</p></article>`)
     + (S.canWrite ? `<form class="carte proposer-carte" id="proposerQ" style="padding:16px 18px">
         <div class="qcarte"><div class="surtitre">Une question te trotte dans la tête ?</div></div>
         <div class="proposer" style="margin-top:8px"><input id="nouvelleQ" maxlength="200" placeholder="Propose une question à la famille…" data-com="nouvelleQ" value="${esc(S.brouillons.nouvelleQ || "")}" />
         <button class="btn">Proposer</button></div></form>` : "")
     + (proposees.length ? `<div class="titre-section">💬 Les questions de la famille</div>` + proposees.map((q) => blocQuestion(q)).join("") : "")
-    + `<div class="titre-section">🗓️ Les jours précédents</div>` + precedentes.map((q) => blocQuestion(q)).join("");
+    + (precedentes.length ? `<div class="titre-section">🗓️ Les jours précédents</div>` + precedentes.map((q) => blocQuestion(q)).join("") : "");
 }
 
 // ---------- Nouveautés depuis la dernière visite ----------
@@ -649,18 +654,23 @@ function carte(p) {
   const qui = apprisPar(p.id);
   const quand = p.date ? new Date(p.date).toLocaleDateString("fr-FR", { day: "numeric", month: "long" }) : "";
   let fin = "";
-  if (p.auteur === S.uid) fin = S.canWrite ? `<button class="del" data-del="${esc(p.id)}">Supprimer</button>` : "";
+  if (p.auteur === S.uid) fin = S.canWrite ? `<button class="del" data-edit="${esc(p.id)}">✏️ Modifier</button><button class="del" data-del="${esc(p.id)}" style="margin-left:0">Supprimer</button>` : "";
   else if (S.canWrite) fin = `<button class="merci ${appris ? "done" : ""}" data-learn="${esc(p.id)}">${appris ? "✓ Appris, merci" : "J'ai appris ✦"}</button>`;
   const estNouvelle = S.uid && p.auteur !== S.uid && !appris;
   const dateLongue = p.date ? new Date(p.date).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" }) : "";
   return `<article class="carte"><div class="entete">${estNouvelle ? `<span class="ruban">✨ New</span>` : ""}<span class="date-carte">${esc(dateLongue)}</span></div>
     <div class="tampon">${svgMonument(lieu?.monument || "maison")}<span>${esc(lieu?.ville || "Famille")}</span></div>
-    ${p.texte ? `<p class="texte">${avecLiens(p.texte)}</p>` : ""}
+    ${S.edition === p.id ? `<form class="edit-form" data-pid="${esc(p.id)}">
+        <textarea data-com="${esc("edit:" + p.id)}" maxlength="2000" style="min-height:120px">${esc(S.brouillons["edit:" + p.id] ?? p.texte)}</textarea>
+        <input data-com="${esc("editlien:" + p.id)}" maxlength="500" placeholder="🔗 Un lien pour creuser (facultatif)" value="${esc(S.brouillons["editlien:" + p.id] ?? (p.lien || ""))}" style="margin-top:8px" />
+        <div style="display:flex;gap:8px;margin-top:8px"><button class="btn" style="flex:1">Enregistrer</button><button type="button" class="ouvrir" data-annuleredit="1">Annuler</button></div>
+      </form>`
+      : p.texte ? `<p class="texte">${avecLiens(p.texte)}</p>` : ""}
     ${p.vocal ? (S.ouvertsVocaux.has(p.id) && cacheVocal[p.vocal.id]
       ? `<audio controls preload="auto" data-vocal="${esc(p.id)}" src="${cacheVocal[p.vocal.id]}"></audio>`
       : `<button class="ecoute" data-ecoute="${esc(p.id)}">▶︎ Écouter la note vocale${p.vocal.duree ? " · " + fmtDuree(p.vocal.duree) : ""}</button>`) : ""}
-    ${lien ? `<a class="lien" href="${esc(lien)}" target="_blank" rel="noopener">🔗 ${esc(new URL(lien).hostname.replace(/^www\./, ""))}</a>` : ""}
-    <div class="sign">${avatar(p.auteur, "mini")}<b>${esc(nom(p.auteur))}</b>${qui.length ? ` · appris par ${esc(qui.map(nom).join(", "))}` : ""}</div>
+    ${lien && S.edition !== p.id ? `<a class="lien" href="${esc(lien)}" target="_blank" rel="noopener">🔗 ${esc(new URL(lien).hostname.replace(/^www\./, ""))}</a>` : ""}
+    <div class="sign">${avatar(p.auteur, "mini")}<b>${esc(nom(p.auteur))}</b>${p.modifie ? ` <span style="font-size:.78rem">(modifié)</span>` : ""}${qui.length ? ` · appris par ${esc(qui.map(nom).join(", "))}` : ""}</div>
     <div class="actions">${reacts}${fin}</div>
     ${blocCommentaires(p)}
   </article>`;
@@ -672,8 +682,11 @@ function blocCommentaires(p) {
   const liste = coms.map((c) => {
     const quand = c.date ? new Date(c.date).toLocaleString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "";
     return `<div class="com">${avatar(c.auteur, "mini")}<div>
-      <div class="bulle"><b>${esc(nom(c.auteur))}</b><span class="quand">${esc(quand)}</span><br>${avecLiens(c.texte)}</div>
-      ${c.auteur === S.uid && S.canWrite ? `<button class="delcom" data-delcom="${esc(c.id)}">Supprimer</button>` : ""}
+      ${S.editionCom === c.id ? `<form class="editcom-form" data-cid="${esc(c.id)}" style="display:flex;gap:6px">
+          <input data-com="${esc("editcom:" + c.id)}" maxlength="500" value="${esc(S.brouillons["editcom:" + c.id] ?? c.texte)}" style="flex:1;border-radius:999px;padding:8px 12px" />
+          <button class="ouvrir">OK</button><button type="button" class="delcom" data-annulercom="1">Annuler</button></form>`
+        : `<div class="bulle"><b>${esc(nom(c.auteur))}</b><span class="quand">${esc(quand)}${c.modifie ? " · modifié" : ""}</span><br>${avecLiens(c.texte)}</div>`}
+      ${c.auteur === S.uid && S.canWrite && S.editionCom !== c.id ? `<button class="delcom" data-editcom="${esc(c.id)}">Modifier</button><button class="delcom" data-delcom="${esc(c.id)}">Supprimer</button>` : ""}
     </div></div>`;
   }).join("");
   const form = S.canWrite ? `<form class="com-form" data-pid="${esc(p.id)}">
@@ -715,9 +728,9 @@ function render() {
     ? `<div class="bandeau"><span>🔔</span><span class="txt">Depuis ta dernière visite : ${morceaux.join(" · ")}</span><button class="x" data-fermernv="1" title="Fermer">✕</button></div>` : "";
   // Bandeau question du jour
   const qdj = questionDuJour();
-  const qdjRepondue = !!maReponse(qdj.id);
+  const qdjRepondue = !qdj || !!maReponse(qdj.id);
   $("#nbq").hidden = qdjRepondue || !S.canWrite;
-  $("#qdjBandeau").innerHTML = S.onglet !== "questions" && !qdjRepondue && S.canWrite
+  $("#qdjBandeau").innerHTML = qdj && S.onglet !== "questions" && !qdjRepondue && S.canWrite
     ? `<div class="bandeau"><span>💭</span><span class="txt"><b>Question du jour :</b> ${esc(qdj.texte)}</span><button class="go" data-tab="questions">Répondre</button></div>` : "";
 
   const aide = $("#aideOnglet"); aide.hidden = false;
@@ -743,6 +756,33 @@ function render() {
 // ---------- Commentaires ----------
 document.addEventListener("input", (e) => { const id = e.target.dataset?.com; if (id) S.brouillons[id] = e.target.value; });
 document.addEventListener("submit", async (e) => {
+  const ef = e.target.closest?.(".edit-form");
+  if (ef) {
+    e.preventDefault();
+    const pid = ef.dataset.pid, p = S.pepites.find((x) => x.id === pid); if (!p) return;
+    const texte = ef.querySelector("textarea").value.trim().slice(0, 2000);
+    const brut = ef.querySelector("input").value.trim();
+    if (!p.vocal && longueurUtile(texte) < MIN_MOTS) { toast(/https?:\/\//i.test(texte) || brut ? "Un lien tout seul, c'est un peu sec 😉 Dis-nous ce que tu en as retenu !" : "Encore quelques mots pour que ce soit une vraie pépite ✦"); return; }
+    const lien = brut ? urlSure(brut) : "";
+    if (brut && !lien) { toast("Ce lien n'a pas l'air valide."); return; }
+    try {
+      await S.db.doc("pepites/" + pid).update({ texte, lien: lien || "", modifie: new Date().toISOString() });
+      S.edition = null; delete S.brouillons["edit:" + pid]; delete S.brouillons["editlien:" + pid];
+      toast("Pépite modifiée ✦"); render();
+    } catch { toast("Pas pu enregistrer, réessaie."); }
+    return;
+  }
+  const cf = e.target.closest?.(".editcom-form");
+  if (cf) {
+    e.preventDefault();
+    const cid = cf.dataset.cid, texte = cf.querySelector("input").value.trim().slice(0, 500);
+    if (!texte) return;
+    try {
+      await S.db.doc("commentaires/" + cid).update({ texte, modifie: new Date().toISOString() });
+      S.editionCom = null; delete S.brouillons["editcom:" + cid]; render();
+    } catch { toast("Pas pu modifier le commentaire."); }
+    return;
+  }
   const rf = e.target.closest?.(".rep-form");
   if (rf) {
     e.preventDefault();
@@ -986,6 +1026,10 @@ document.addEventListener("click", async (e) => {
   if (t.dataset.tab) { S.onglet = t.dataset.tab; render(); }
   if (t.dataset.lieu || t.id === "profilBtn") fenetreProfil(false);
   if (t.dataset.picker) choisirEmoji(t.dataset.picker);
+  if (t.dataset.edit) { S.edition = t.dataset.edit; delete S.brouillons["edit:" + S.edition]; delete S.brouillons["editlien:" + S.edition]; render(); }
+  if (t.dataset.annuleredit) { S.edition = null; render(); }
+  if (t.dataset.editcom) { S.editionCom = t.dataset.editcom; delete S.brouillons["editcom:" + S.editionCom]; render(); }
+  if (t.dataset.annulercom) { S.editionCom = null; render(); }
   if (t.dataset.ouvrirq) { S.questionsOuvertes.add(t.dataset.ouvrirq); render(); }
   if (t.dataset.fermernv) { S.nouveautesFermees = true; render(); }
   if (t.dataset.delq) {
