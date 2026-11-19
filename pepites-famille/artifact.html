@@ -79,7 +79,7 @@
   .profil-btn img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
   .lune { position: absolute; top: 84px; right: 14px; width: 54px; height: 54px; filter: drop-shadow(0 0 14px rgba(255,226,170,.75)); pointer-events: none; }
   .branches { position: fixed; top: 0; left: 0; width: min(32vw, 200px); height: auto; pointer-events: none; z-index: 0; opacity: .9; }
-  .lanterne { position: absolute; left: -6px; bottom: 6px; width: 58px; pointer-events: none; filter: drop-shadow(0 0 22px rgba(255,170,70,.85)); }
+  .lanterne { position: absolute; left: 50%; transform: translateX(-50%); bottom: 18px; width: 58px; pointer-events: none; filter: drop-shadow(0 0 22px rgba(255,170,70,.85)); }
   header, .famille, .ecrire, .onglets, main, footer, #note { position: relative; z-index: 1; }
 
   /* ---------- Écrire ---------- */
@@ -103,6 +103,12 @@
   .onglets { display: flex; gap: 8px; margin: 26px 0 14px; }
   .onglets button { flex: 1; border: 1px solid var(--bord); background: var(--verre); color: var(--creme); border-radius: 999px; padding: 10px; font: inherit; font-weight: 500; cursor: pointer; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
   .onglets button.on { background: var(--creme); color: var(--encre); border-color: var(--creme); }
+  .aide-onglet { text-align: center; font-size: .9rem; margin: -4px 8px 16px; opacity: .92; text-shadow: 0 1px 8px rgba(0,0,0,.4); position: relative; z-index: 1; }
+  .emojis-grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); gap: 2px; max-height: 46vh; overflow: auto; margin-top: 6px; }
+  .emojis-grille button { border: 0; background: none; font-size: 1.55rem; padding: 4px 0; cursor: pointer; border-radius: 10px; }
+  .emojis-grille button:hover { background: #f6ecdc; }
+  .emojis-grille h5 { grid-column: 1 / -1; margin: 10px 0 2px; font-size: .78rem; color: var(--doux); font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+  .actions .plus { font-weight: 700; color: var(--doux); }
   .onglets .n[hidden] { display: none; }
   .onglets .n { display: inline-block; min-width: 20px; padding: 0 6px; border-radius: 999px; background: var(--rose); color: #fff; font-size: .78rem; margin-left: 4px; }
 
@@ -178,9 +184,10 @@
   <div id="note"></div>
 
   <nav class="onglets" id="onglets" hidden>
-    <button data-tab="decouvrir" class="on">Nouvelles pépites<span class="n" id="nb" hidden></span></button>
-    <button data-tab="fil">Le trésor de famille</button>
+    <button data-tab="decouvrir" class="on">🆕 À lire<span class="n" id="nb" hidden></span></button>
+    <button data-tab="fil">📚 Toutes les pépites</button>
   </nav>
+  <p class="aide-onglet" id="aideOnglet" hidden></p>
 
   <main id="liste"><div class="vide">Chargement…</div></main>
 
@@ -274,6 +281,18 @@ function svgMonument(cle, cls = "") {
 
 // ---------- État ----------
 const EMOJIS = ["❤️", "🤯", "🙏"];
+const estEmoji = (e) => typeof e === "string" && e.length <= 16 && /^[\p{Extended_Pictographic}\p{Regional_Indicator}\p{Emoji_Component}\u200d\ufe0f\u20e3]+$/u.test(e) && /[\p{Extended_Pictographic}\p{Regional_Indicator}]/u.test(e);
+const CATALOGUE = {
+  "Émotions": "😀 😃 😄 😁 😆 😅 🤣 😂 🙂 😉 😊 😇 🥰 😍 🤩 😘 😗 😚 😋 😛 😜 🤪 😝 🤑 🤗 🤭 🤫 🤔 🤐 🤨 😐 😑 😶 😏 😒 🙄 😬 😌 😔 😪 🤤 😴 😷 🤒 🤕 🤢 🤮 🥵 🥶 🥴 😵 🤯 🤠 🥳 😎 🤓 🧐 😕 😟 🙁 😮 😯 😲 😳 🥺 😦 😧 😨 😰 😥 😢 😭 😱 😖 😣 😞 😓 😩 😫 🥱 😤 😡 😠 🤬 😈 💀 🤡 👻 👽 🤖 💩",
+  "Gestes": "👍 👎 👏 🙌 👐 🤲 🙏 🤝 💪 👊 ✊ 🤛 🤜 🤞 ✌️ 🤟 🤘 👌 🤌 🤏 👈 👉 👆 👇 ☝️ ✋ 🤚 🖐️ 🖖 👋 🤙 ✍️ 💅 🫶 🫡 🫠 🫢 🫣",
+  "Cœurs": "❤️ 🧡 💛 💚 💙 💜 🤎 🖤 🤍 💔 ❣️ 💕 💞 💓 💗 💖 💘 💝 💟 ❤️‍🔥 ❤️‍🩹 💯 💢 💥 💫 💦 💨 ✨ ⭐ 🌟 🔥 ⚡",
+  "Famille": "👶 🧒 👦 👧 🧑 👨 👩 🧓 👴 👵 👨‍👩‍👧 👨‍👩‍👧‍👦 👪 🤱 👼 🧕 🧔 👳 👲 💑 💏 🫂 🗣️ 👀 🧠 🫀",
+  "Nature": "🌍 🌙 ☀️ 🌤️ 🌈 ☔ ❄️ 🌊 🌸 🌺 🌻 🌹 🌷 🌱 🌿 🍀 🌴 🌵 🍁 🍂 🐶 🐱 🦁 🐯 🐻 🐼 🐨 🐵 🐸 🐢 🐍 🦋 🐝 🐞 🐟 🐬 🐳 🦅 🦉 🐪 🐫 🐎",
+  "Nourriture": "☕ 🍵 🫖 🥐 🍞 🥖 🧀 🥚 🍳 🥗 🍲 🥘 🍝 🍕 🍔 🌮 🍰 🎂 🍪 🍫 🍯 🍉 🍊 🍋 🍌 🍇 🍓 🍒 🍑 🥭 🍍 🥥 🫒 🌶️ 🥕 🍅",
+  "Activités": "🎉 🎊 🎁 🎈 🏆 🥇 🎯 🎲 🧩 🎮 ⚽ 🏀 🎾 🏃 🚶 🧘 🏊 🚴 🎨 🎭 🎬 🎤 🎧 🎼 🎹 🎸 📚 📖 ✏️ 📝 🎓",
+  "Objets & idées": "💡 🔑 🗝️ 💰 💸 💳 📈 📉 💼 🏠 🏡 🕌 🏛️ 🗼 🕰️ ⏰ ⌛ 📱 💻 📷 🔍 🧭 🗺️ ✈️ 🚗 🚀 ⛵ 🧳 🎒 💊 🩺 🛠️ ⚖️ 🔔 📌 📍 ✅ ❌ ❓ ❗ ‼️ ⁉️ 🆗 🆒 🆕",
+  "Drapeaux": "🇲🇦 🇫🇷 🇩🇿 🇹🇳 🇪🇬 🇸🇦 🇦🇪 🇹🇷 🇪🇸 🇮🇹 🇩🇪 🇧🇪 🇨🇭 🇬🇧 🇺🇸 🇨🇦 🇯🇵 🇧🇷 🏳️ 🏴",
+};
 const S = {
   enLigne: new Set(),
   db: null, user: null, uid: null, canWrite: true,
@@ -416,10 +435,11 @@ function renderFamille() {
 function carte(p) {
   const lieu = p.lieu;
   const appris = !!moi().appris?.[p.id];
-  const reacts = EMOJIS.map((e) => {
+  const utilises = Object.values(S.actions).flatMap((a) => a.reactions?.[p.id] || []).filter(estEmoji);
+  const reacts = [...new Set([...EMOJIS, ...utilises])].map((e) => {
     const l = reactionsDe(p.id, e);
     return `<button data-react="${e}" data-id="${esc(p.id)}" class="${l.includes(S.uid) ? "mine" : ""}" title="${esc(l.map(nom).join(", "))}" ${S.canWrite ? "" : "disabled"}>${e}${l.length ? " " + l.length : ""}</button>`;
-  }).join("");
+  }).join("") + (S.canWrite ? `<button class="plus" data-picker="${esc(p.id)}" title="Réagir avec un autre emoji">＋😊</button>` : "");
   const lien = p.lien && urlSure(p.lien);
   const qui = apprisPar(p.id);
   const quand = p.date ? new Date(p.date).toLocaleDateString("fr-FR", { day: "numeric", month: "long" }) : "";
@@ -440,6 +460,7 @@ function render() {
   renderFamille();
   $("#ecrire").hidden = !(S.charge && S.canWrite);
   $("#onglets").hidden = !S.charge;
+  if (!S.charge) $("#aideOnglet").hidden = true;
   document.querySelectorAll("#onglets button").forEach((b) => b.classList.toggle("on", b.dataset.tab === S.onglet));
   $("#note").innerHTML = S.charge && !S.canWrite
     ? `<div class="note">Tu peux lire le fil, mais pas encore écrire. Demande à la personne qui t'a envoyé le lien de t'inviter par e-mail comme <b>Éditeur</b>.</div>` : "";
@@ -452,6 +473,10 @@ function render() {
   const restants = nouveaux.filter((p) => !moi().appris?.[p.id]).length;
   $("#nb").hidden = !restants; $("#nb").textContent = restants;
 
+  const aide = $("#aideOnglet"); aide.hidden = false;
+  aide.textContent = S.onglet === "decouvrir"
+    ? "Les pépites de la famille que tu n'as pas encore lues. Clique sur « J'ai appris ✦ » et elles rejoignent toutes les autres."
+    : "Toutes les pépites partagées depuis le début, les tiennes comprises.";
   if (S.onglet === "decouvrir") {
     const s = serie();
     liste.innerHTML = nouveaux.length
@@ -512,6 +537,38 @@ function photoReduite(fichier) {
   });
 }
 
+function basculerReaction(id, e) {
+  if (!estEmoji(e)) return;
+  ecrireMoi((m) => { const l = m.reactions[id] || []; m.reactions[id] = l.includes(e) ? l.filter((x) => x !== e) : [...l, e]; });
+}
+function premierEmoji(txt) {
+  const t = txt.trim(); if (!t) return "";
+  if (typeof Intl !== "undefined" && Intl.Segmenter) {
+    for (const { segment } of new Intl.Segmenter("fr", { granularity: "grapheme" }).segment(t)) if (estEmoji(segment)) return segment;
+    return "";
+  }
+  return estEmoji(t) ? t : "";
+}
+function choisirEmoji(pid) {
+  const m = document.createElement("div");
+  m.className = "modal";
+  m.innerHTML = `<form>
+    <h3>Ta réaction</h3>
+    <input id="e-libre" placeholder="Tape ou colle n'importe quel emoji 😊" autocomplete="off" />
+    <div class="emojis-grille">${Object.entries(CATALOGUE).map(([cat, liste]) => `<h5>${cat}</h5>` + liste.split(" ").filter(estEmoji).map((e) => `<button type="button" data-e="${e}">${e}</button>`).join("")).join("")}</div>
+    <button type="button" class="annuler">Fermer</button>
+  </form>`;
+  document.body.appendChild(m);
+  const fermer = () => m.remove();
+  m.querySelector(".annuler").onclick = fermer;
+  m.onclick = (e) => { if (e.target === m) fermer(); };
+  m.querySelector(".emojis-grille").onclick = (e) => { const b = e.target.closest("button[data-e]"); if (b) { basculerReaction(pid, b.dataset.e); fermer(); } };
+  const libre = m.querySelector("#e-libre");
+  const valider = () => { const e = premierEmoji(libre.value); if (e) { basculerReaction(pid, e); fermer(); } else if (libre.value.trim()) toast("Ça, ce n'est pas un emoji 😉"); };
+  libre.oninput = () => { if (premierEmoji(libre.value)) valider(); };
+  m.querySelector("form").onsubmit = (e) => { e.preventDefault(); valider(); };
+}
+
 function fenetreProfil(premiereFois) {
   const m = document.createElement("div");
   m.className = "modal";
@@ -570,6 +627,7 @@ document.addEventListener("click", async (e) => {
   const t = e.target.closest("button"); if (!t || t.closest(".modal")) return;
   if (t.dataset.tab) { S.onglet = t.dataset.tab; render(); }
   if (t.dataset.lieu || t.id === "profilBtn") fenetreProfil(false);
+  if (t.dataset.picker) choisirEmoji(t.dataset.picker);
   if (t.dataset.react) {
     const { id, react } = t.dataset;
     ecrireMoi((m) => { const l = m.reactions[id] || []; m.reactions[id] = l.includes(react) ? l.filter((x) => x !== react) : [...l, react]; });
