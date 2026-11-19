@@ -18,7 +18,9 @@ plus tard, par exemple pour un hébergement indépendant.
 - **À découvrir** : les pépites des autres que tu n'as pas encore lues. « J'ai appris ✦ » fait grimper ta série 🔥.
 - Une grande horloge, et la famille en haut : chacun indique sa ville, avec son monument (Tour Eiffel pour Paris…) et son heure locale.
 - Chaque pépite est une carte postale avec le tampon de la ville d'où elle a été écrite.
-- Photo de fond : Unsplash (licence Unsplash, usage libre).
+- Profil avec photo et lieu de vie (monuments de Rabat : Tour Hassan, Tour Mohammed VI, Oudayas, Mausolée Mohammed V).
+- Étoiles : +3 par pépite, +1 quand quelqu'un apprend grâce à toi, 👑 pour le plus grand transmetteur.
+- Un lien seul ne suffit pas : il faut au moins 40 caractères écrits avec ses mots.
 
 ## Lancer
 

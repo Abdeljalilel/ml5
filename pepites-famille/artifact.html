@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Pépites de Famille</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=DM+Sans:wght@400;500;700&family=Amiri:wght@400;700&display=swap" rel="stylesheet" />
 <style>
   :root {
     --nuit: #1d1838; --violet: #4a3a7a; --rose: #f29e8e; --or: #f6c177; --creme: #fff8ef;
@@ -31,7 +31,8 @@
   .heure { font-family: "Fraunces", serif; font-weight: 400; font-size: clamp(4rem, 17vw, 7rem); line-height: 1; margin: 14px 0 4px; font-variant-numeric: tabular-nums; }
   .heure .sec { font-size: .32em; opacity: .7; vertical-align: top; margin-left: 4px; }
   .date { font-size: 1.05rem; opacity: .92; text-transform: capitalize; }
-  .salut { margin-top: 10px; font-family: "Fraunces", serif; font-style: italic; font-size: 1.15rem; color: var(--or); }
+  .salut { margin-top: 12px; font-family: "Fraunces", serif; font-style: italic; font-size: 1.2rem; color: var(--or); }
+  .salut-ar { font-family: "Amiri", serif; font-size: 1.45rem; color: var(--or); margin-top: 2px; }
 
   /* ---------- La famille ---------- */
   .famille { display: flex; gap: 12px; overflow-x: auto; padding: 18px 2px 8px; margin-top: 12px; scrollbar-width: none; justify-content: safe center; }
@@ -39,8 +40,25 @@
   .membre { flex: 0 0 auto; width: 104px; text-align: center; background: var(--verre); border: 1px solid var(--bord); border-radius: 18px; padding: 12px 6px 10px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
   .membre.moi { border-color: var(--or); }
   .membre button { all: unset; cursor: pointer; display: block; width: 100%; }
-  .monument { width: 42px; height: 58px; color: var(--or); display: block; margin: 0 auto 6px; filter: drop-shadow(0 0 8px rgba(246,193,119,.45)); }
+  .membre { position: relative; }
+  .monument { width: 30px; height: 42px; color: var(--or); display: block; margin: 0 auto -6px; filter: drop-shadow(0 0 8px rgba(246,193,119,.45)); position: relative; z-index: 1; }
   .monument.vide { color: rgba(255,255,255,.55); filter: none; }
+  .avatar { width: 58px; height: 58px; border-radius: 50%; margin: 0 auto 6px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--rose), var(--violet)); color: #fff; font-family: "Fraunces", serif; font-size: 1.5rem; border: 2px solid rgba(255,255,255,.8); overflow: hidden; }
+  .avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .etoiles { font-size: .78rem; color: var(--or); margin-top: 3px; font-weight: 700; }
+  .couronne { position: absolute; top: -10px; right: -4px; font-size: 1.2rem; transform: rotate(18deg); }
+  .mini { width: 24px; height: 24px; border-radius: 50%; display: inline-flex; vertical-align: middle; margin-right: 6px; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--rose), var(--violet)); color: #fff; font-size: .72rem; overflow: hidden; }
+  .mini img { width: 100%; height: 100%; object-fit: cover; }
+  .regle { margin: 10px 2px 0; font-size: .84rem; color: var(--doux); line-height: 1.45; }
+  .regle b { color: #b4566c; }
+  .compteur { font-size: .78rem; color: var(--doux); text-align: right; margin-top: 4px; min-height: 1em; }
+  .photo-choix { display: flex; align-items: center; gap: 12px; }
+  .photo-choix .avatar { margin: 0; flex: 0 0 auto; }
+  .photo-choix label.bouton { display: inline-block; margin: 0; padding: 9px 14px; border-radius: 999px; background: #fff; border: 1px solid #ecdfcb; cursor: pointer; font-weight: 500; font-size: .88rem; }
+  footer.origine { margin-top: 40px; padding: 22px 20px; text-align: center; border-top: 1px solid var(--bord); }
+  footer.origine h4 { font-family: "Fraunces", serif; font-weight: 600; font-size: 1.15rem; margin: 0 0 8px; color: var(--or); }
+  footer.origine p { margin: 0 auto; max-width: 480px; line-height: 1.6; font-size: .95rem; opacity: .9; }
+  footer.origine .bareme { margin-top: 14px; font-size: .84rem; opacity: .8; }
   .membre .nom { font-weight: 700; font-size: .92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .membre .ville { font-size: .76rem; opacity: .8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .membre .h { font-family: "Fraunces", serif; font-size: 1.05rem; margin-top: 2px; font-variant-numeric: tabular-nums; }
@@ -61,6 +79,7 @@
   .onglets { display: flex; gap: 8px; margin: 26px 0 14px; }
   .onglets button { flex: 1; border: 1px solid var(--bord); background: var(--verre); color: var(--creme); border-radius: 999px; padding: 10px; font: inherit; font-weight: 500; cursor: pointer; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
   .onglets button.on { background: var(--creme); color: var(--encre); border-color: var(--creme); }
+  .onglets .n[hidden] { display: none; }
   .onglets .n { display: inline-block; min-width: 20px; padding: 0 6px; border-radius: 999px; background: var(--rose); color: #fff; font-size: .78rem; margin-left: 4px; }
 
   /* ---------- Cartes postales ---------- */
@@ -86,7 +105,6 @@
 
   .vide { text-align: center; padding: 36px 16px; font-family: "Fraunces", serif; font-style: italic; font-size: 1.1rem; opacity: .9; text-shadow: 0 2px 12px rgba(0,0,0,.4); }
   .note { background: var(--verre); border: 1px dashed var(--bord); border-radius: 14px; padding: 10px 14px; font-size: .88rem; margin-top: 16px; backdrop-filter: blur(8px); }
-  .credit { text-align: center; font-size: .72rem; opacity: .55; margin-top: 30px; }
 
   /* ---------- Fenêtres ---------- */
   .modal { position: fixed; inset: 0; background: rgba(20,16,40,.55); display: flex; align-items: center; justify-content: center; padding: 18px; z-index: 20; backdrop-filter: blur(4px); }
@@ -110,28 +128,36 @@
     <div class="heure" id="heure">--:--</div>
     <div class="date" id="date"></div>
     <div class="salut" id="salut"></div>
+    <div class="salut-ar" id="salut-ar" dir="rtl" lang="ar"></div>
   </header>
 
   <section class="famille" id="famille" aria-label="La famille"></section>
 
   <form class="ecrire" id="ecrire" hidden>
-    <h2>Ce que la vie m'a appris…</h2>
-    <textarea id="texte" maxlength="2000" placeholder="Une observation, une leçon, un déclic du jour…" required></textarea>
+    <h2>Dépose ta pépite ✦</h2>
+    <textarea id="texte" maxlength="2000" placeholder="Un déclic, une leçon de vie, une astuce qui t'a sauvé la mise… Qu'est-ce que tu veux nous transmettre aujourd'hui ?" required></textarea>
+    <div class="compteur" id="compteur"></div>
     <div class="ligne">
-      <input id="lienSaisi" type="text" inputmode="url" autocapitalize="off" maxlength="500" placeholder="🔗 Un lien à partager (facultatif)" />
-      <button class="btn" id="envoyer">Partager ✦</button>
+      <input id="lienSaisi" type="text" inputmode="url" autocapitalize="off" maxlength="500" placeholder="🔗 Un lien pour creuser (facultatif)" />
+      <button class="btn" id="envoyer">Transmettre ✦</button>
     </div>
+    <p class="regle">💡 <b>La règle d'or :</b> un lien balancé tout seul, ça ne compte pas 😉 Raconte avec tes mots ce que tu en as retenu et pourquoi ça vaut le coup. C'est ça, la vraie pépite.</p>
   </form>
 
   <div id="note"></div>
 
   <nav class="onglets" id="onglets" hidden>
-    <button data-tab="decouvrir" class="on">À découvrir<span class="n" id="nb" hidden></span></button>
-    <button data-tab="fil">Tout le fil</button>
+    <button data-tab="decouvrir" class="on">Nouvelles pépites<span class="n" id="nb" hidden></span></button>
+    <button data-tab="fil">Le trésor de famille</button>
   </nav>
 
   <main id="liste"><div class="vide">Chargement…</div></main>
-  <div class="credit">Photo : Unsplash</div>
+
+  <footer class="origine">
+    <h4>Pourquoi ce petit coin ?</h4>
+    <p>Un constat tout simple : on passe des heures à scroller sur les réseaux, alors qu'on a sous la main ce qu'il y a de plus précieux, l'expérience de ceux qu'on aime.<br><br><b>Alors au lieu de scroller, venez : chaque jour, on apprend quelque chose les uns des autres.</b> ✦</p>
+    <div class="bareme">⭐ +3 par pépite transmise · ⭐ +1 chaque fois que quelqu'un apprend grâce à toi · 👑 pour le plus grand transmetteur</div>
+  </footer>
 </div>
 
 <script>
@@ -150,15 +176,20 @@ const MONUMENTS = {
   christ:   { nom: "Christ", d: "M4 17h32M20 12v6M17 18h6l-1 26h-4zM11 54l9-10 9 10z", c: [[20, 8, 3]] },
   atomium:  { nom: "Atomium", d: "M20 10 8 28M20 10l12 18M20 10v36M8 28l12 18M32 28 20 46M20 46l-6 8M20 46l6 8M8 28h24", c: [[20, 10, 3.5], [8, 28, 3.5], [32, 28, 3.5], [20, 28, 3.5], [20, 46, 3.5]] },
   sagrada:  { nom: "Basilique", d: "M8 54V22l3-14 3 14v32M17 54V14l3-12 3 12v40M26 54V22l3-14 3 14v32M5 54h30M14 36h12" },
+  hassan:   { nom: "Tour Hassan", d: "M11 54V10h18v44M9 10h22M15 18q5-6 10 0v8H15zM15 32h10v10H15zM18 32v10M22 32v10M3 54v-7M7 54v-7M33 54v-7M37 54v-7M1 54h38" },
+  m6:       { nom: "Tour Mohammed VI", d: "M20 2q-8 18-7 52h14q1-34-7-52zM15.5 20h9M14 32h12M13.5 44h13M17 2.5h6M8 54h24" },
+  oudayas:  { nom: "Kasbah des Oudayas", d: "M4 54V16h32v38M4 16l3-4 3 4 3-4 3 4 3-4 3 4 3-4 3 4 3-4 3 4 3-4 2 4M13 54V38q7-12 14 0v16M9 32q11-16 22 0" },
+  mausolee: { nom: "Mausolée Mohammed V", d: "M8 54V28h24v26M6 28h28M8 28l12-13 12 13M20 15v-4M13 54V40q3-4 6 0v14M21 54V40q3-4 6 0v14" },
   ville:    { nom: "Ville", d: "M4 54V30h8v24M12 54V16h10v38M22 54V26h8v28M30 54V36h6v18M15 22h4M15 30h4M15 38h4M25 32h2M25 40h2" },
   maison:   { nom: "Maison", d: "M7 54V30L20 17l13 13v24zM16 54V42h8v12M3 32 20 15l17 17M27 22v-6h4v10" },
   palmier:  { nom: "Palmier", d: "M20 54q-2-20 2-34M22 20q-8-6-16-2M22 20q8-7 16-3M22 20q-4-10-12-12M22 20q5-10 13-11M22 20q0-8-2-14M8 54h26" },
 };
+const RABAT = ["mausolee", "oudayas", "m6", "hassan"]; // affichés en premier
 const VILLES = [
   ["Paris", "Europe/Paris", "eiffel"], ["Lyon", "Europe/Paris", "ville"], ["Marseille", "Europe/Paris", "sagrada"],
   ["Londres", "Europe/London", "bigben"], ["New York", "America/New_York", "liberte"], ["Rome", "Europe/Rome", "colisee"],
   ["Le Caire", "Africa/Cairo", "pyramides"], ["Marrakech", "Africa/Casablanca", "minaret"], ["Casablanca", "Africa/Casablanca", "coupole"],
-  ["Rabat", "Africa/Casablanca", "minaret"], ["Fès", "Africa/Casablanca", "minaret"], ["Tanger", "Africa/Casablanca", "minaret"],
+  ["Rabat", "Africa/Casablanca", "hassan"], ["Salé", "Africa/Casablanca", "m6"], ["Fès", "Africa/Casablanca", "minaret"], ["Tanger", "Africa/Casablanca", "minaret"],
   ["Agadir", "Africa/Casablanca", "palmier"], ["Istanbul", "Europe/Istanbul", "coupole"], ["Dubaï", "Asia/Dubai", "burj"],
   ["Tokyo", "Asia/Tokyo", "fuji"], ["Sydney", "Australia/Sydney", "opera"], ["Rio de Janeiro", "America/Sao_Paulo", "christ"],
   ["Bruxelles", "Europe/Brussels", "atomium"], ["Barcelone", "Europe/Madrid", "sagrada"], ["Madrid", "Europe/Madrid", "ville"],
@@ -183,7 +214,7 @@ const S = {
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const jourLocal = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-function toast(msg) { const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2400); }
+function toast(msg) { document.querySelectorAll(".toast").forEach((x) => x.remove()); const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2400); }
 
 // Liens : n'accepte que http(s)
 function urlSure(u) {
@@ -204,14 +235,17 @@ function heureA(tz, opts = {}) {
 }
 function salutation() {
   const h = new Date().getHours();
-  return h < 5 ? "Belle nuit" : h < 12 ? "Bonjour" : h < 18 ? "Bel après-midi" : "Bonsoir";
+  return h >= 5 && h < 17
+    ? ["Bonjour, chère petite famille ✦", "صباح الخير يا عائلتي الصغيرة الغالية"]
+    : ["Bonsoir, chère petite famille ✦", "مساء الخير يا عائلتي الصغيرة الغالية"];
 }
 function tic() {
   const d = new Date();
   $("#heure").innerHTML = `${heureA()}<span class="sec">${String(d.getSeconds()).padStart(2, "0")}</span>`;
   $("#date").textContent = d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
   document.querySelectorAll("[data-tz]").forEach((el) => (el.textContent = heureA(el.dataset.tz)));
-  $("#salut").textContent = S.uid ? `${salutation()}, ${nom(S.uid)} ✦` : salutation() + " ✦";
+  const [fr, ar] = salutation();
+  if ($("#salut").textContent !== fr) { $("#salut").textContent = fr; $("#salut-ar").textContent = ar; }
 }
 setInterval(tic, 1000);
 
@@ -251,21 +285,45 @@ function serie() {
   while (jours.has(jourLocal(d))) { n++; d.setDate(d.getDate() - 1); }
   return n;
 }
+// Étoiles : +3 par pépite transmise, +1 chaque fois que quelqu'un d'autre apprend grâce à toi
+function etoiles(uid) {
+  const miennes = S.pepites.filter((p) => p.auteur === uid);
+  return miennes.length * 3 + miennes.reduce((n, p) => n + apprisPar(p.id).filter((u) => u !== uid).length, 0);
+}
+function roi(ids) {
+  let best = null, max = 0;
+  ids.forEach((id) => { const e = etoiles(id); if (e > max) { max = e; best = id; } else if (e === max) best = null; });
+  return best;
+}
+function avatar(uid, cls = "avatar") {
+  const photo = S.actions[uid]?.photo;
+  const ok = typeof photo === "string" && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(photo);
+  return `<div class="${cls}">${ok ? `<img src="${photo}" alt="">` : esc((nom(uid)[0] || "?").toUpperCase())}</div>`;
+}
+// Le texte doit apporter quelque chose en plus d'un lien
+const MIN_MOTS = 40;
+const longueurUtile = (t) => t.replace(/https?:\/\/\S+/gi, "").replace(/\s+/g, " ").trim().length;
+
 const aDecouvrir = () => S.pepites.filter((p) => p.auteur !== S.uid && (!moi().appris?.[p.id] || moi().appris[p.id] === jourLocal()));
 
 // ---------- Rendu ----------
 function renderFamille() {
   const ids = [...new Set([S.uid, ...Object.keys(S.actions), ...S.pepites.map((p) => p.auteur)])].filter(Boolean);
+  const champion = roi(ids);
   $("#famille").innerHTML = ids.map((id) => {
     const lieu = S.actions[id]?.lieu;
     const estMoi = id === S.uid;
+    const e = etoiles(id);
     const contenu = `
+      ${id === champion ? `<span class="couronne" title="Plus grand transmetteur">👑</span>` : ""}
       ${svgMonument(lieu?.monument || "maison", "monument" + (lieu ? "" : " vide"))}
+      ${avatar(id)}
       <div class="nom">${esc(nom(id))}</div>
       <div class="ville">${lieu ? esc(lieu.ville) : estMoi ? "&nbsp;" : "Quelque part"}</div>
       ${lieu ? `<div class="h" data-tz="${esc(lieu.tz)}">${heureA(lieu.tz)}</div>` : ""}
-      ${estMoi && S.canWrite ? `<div class="ici">📍 ${lieu ? "Je bouge" : "Où es-tu ?"}</div>` : ""}`;
-    return `<div class="membre ${estMoi ? "moi" : ""}">${estMoi && S.canWrite ? `<button data-lieu="1" title="Indiquer où tu es">${contenu}</button>` : contenu}</div>`;
+      <div class="etoiles">⭐ ${e}</div>
+      ${estMoi && S.canWrite ? `<div class="ici">✎ Mon profil</div>` : ""}`;
+    return `<div class="membre ${estMoi ? "moi" : ""}">${estMoi && S.canWrite ? `<button data-lieu="1" title="Modifier mon profil">${contenu}</button>` : contenu}</div>`;
   }).join("");
 }
 
@@ -286,7 +344,7 @@ function carte(p) {
     <div class="tampon">${svgMonument(lieu?.monument || "maison")}<span>${esc(lieu?.ville || "Famille")}</span></div>
     <p class="texte">${avecLiens(p.texte)}</p>
     ${lien ? `<a class="lien" href="${esc(lien)}" target="_blank" rel="noopener">🔗 ${esc(new URL(lien).hostname.replace(/^www\./, ""))}</a>` : ""}
-    <div class="sign">— <b>${esc(nom(p.auteur))}</b>${quand ? ", le " + quand : ""}${qui.length ? ` · appris par ${esc(qui.map(nom).join(", "))}` : ""}</div>
+    <div class="sign">${avatar(p.auteur, "mini")}<b>${esc(nom(p.auteur))}</b>${quand ? ", le " + quand : ""}${qui.length ? ` · appris par ${esc(qui.map(nom).join(", "))}` : ""}</div>
     <div class="actions">${reacts}${fin}</div>
   </article>`;
 }
@@ -312,9 +370,9 @@ function render() {
     const s = serie();
     liste.innerHTML = nouveaux.length
       ? nouveaux.map(carte).join("") + (s ? `<div class="vide">🔥 ${s} jour${s > 1 ? "s" : ""} d'affilée à apprendre de ta famille</div>` : "")
-      : `<div class="vide">${S.pepites.length ? "Tu as tout découvert ✦<br>À ton tour de partager ce que la vie t'a appris." : "Le fil est encore vierge.<br>Sois la première personne à y déposer une pépite ✦"}</div>`;
+      : `<div class="vide">${S.pepites.length ? "Tu es à jour ✦<br>À ton tour d'émerveiller la famille." : "Le trésor est encore vide…<br>À toi l'honneur de déposer la toute première pépite ✦"}</div>`;
   } else {
-    liste.innerHTML = S.pepites.length ? S.pepites.map(carte).join("") : `<div class="vide">Le fil est encore vierge ✦</div>`;
+    liste.innerHTML = S.pepites.length ? S.pepites.map(carte).join("") : `<div class="vide">Le trésor est encore vide ✦</div>`;
   }
 }
 
@@ -324,6 +382,10 @@ $("#ecrire").onsubmit = async (e) => {
   const texte = $("#texte").value.trim();
   const brut = $("#lienSaisi").value.trim();
   if (!texte) return;
+  if (longueurUtile(texte) < MIN_MOTS) {
+    toast(/https?:\/\//i.test(texte) || brut ? "Un lien tout seul, c'est un peu sec 😉 Dis-nous ce que tu en as retenu !" : "Encore quelques mots pour que ce soit une vraie pépite ✦");
+    $("#texte").focus(); return;
+  }
   const lien = brut ? urlSure(brut) : "";
   if (brut && !lien) { toast("Ce lien n'a pas l'air valide."); return; }
   const btn = $("#envoyer"); btn.disabled = true;
@@ -333,8 +395,8 @@ $("#ecrire").onsubmit = async (e) => {
       texte: texte.slice(0, 2000), lien: lien || "", auteur: S.uid, date: new Date().toISOString(),
       lieu: lieu ? { ville: lieu.ville, monument: lieu.monument } : null,
     });
-    $("#texte").value = ""; $("#lienSaisi").value = "";
-    toast("Pépite partagée ✦"); S.onglet = "fil"; render();
+    $("#texte").value = ""; $("#lienSaisi").value = ""; majCompteur();
+    toast("Pépite transmise ✦ +3 ⭐"); S.onglet = "fil"; render();
   } catch (err) {
     if (err?.code === "invalid_argument") { S.canWrite = false; render(); }
     else toast(err?.code === "quota_exceeded" ? "Le fil est plein." : "Pas pu partager, réessaie.");
@@ -342,27 +404,60 @@ $("#ecrire").onsubmit = async (e) => {
   btn.disabled = false;
 };
 
+function majCompteur() {
+  const t = $("#texte").value, n = longueurUtile(t);
+  $("#compteur").textContent = !t.trim() ? "" : n < MIN_MOTS ? `Encore ${MIN_MOTS - n} caractères de ta plume ✍️` : "Parfait ✦";
+}
+$("#texte").addEventListener("input", majCompteur);
+
+// Réduit la photo choisie à un petit carré JPEG (pour rester léger)
+function photoReduite(fichier) {
+  return new Promise((ok, ko) => {
+    const img = new Image();
+    const url = URL.createObjectURL(fichier);
+    img.onload = () => {
+      const T = 160, c = document.createElement("canvas"); c.width = c.height = T;
+      const s = Math.min(img.width, img.height);
+      c.getContext("2d").drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, T, T);
+      URL.revokeObjectURL(url); ok(c.toDataURL("image/jpeg", 0.8));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); ko(); };
+    img.src = url;
+  });
+}
+
 function fenetreProfil(premiereFois) {
   const m = document.createElement("div");
   m.className = "modal";
   const actuel = moi();
   let monument = actuel.lieu?.monument || "";
+  let photo = actuel.photo || "";
   m.innerHTML = `<form>
-    <h3>${premiereFois ? "Bienvenue ✦" : "Où es-tu ?"}</h3>
-    <p>Ton nom et ta ville apparaissent au-dessus de toi, avec le monument de ta ville et ton heure.</p>
+    <h3>${premiereFois ? "Bienvenue dans la famille ✦" : "Mon profil"}</h3>
+    <p>Ta photo, ton nom et ton lieu de vie s'affichent en haut, avec le monument de ta ville et ton heure.</p>
+    <label>Ta photo</label>
+    <div class="photo-choix"><div class="avatar" id="p-apercu"></div>
+      <label class="bouton" for="p-photo">📷 Choisir une photo</label>
+      <input id="p-photo" type="file" accept="image/*" hidden /></div>
     <label for="p-nom">Comment la famille t'appelle</label>
     <input id="p-nom" maxlength="40" placeholder="Maman, Papa, Sarah…" required />
-    <label for="p-ville">Ta ville</label>
-    <input id="p-ville" maxlength="40" list="villes" placeholder="Paris, Casablanca, Tokyo…" />
+    <label for="p-ville">Où tu vis</label>
+    <input id="p-ville" maxlength="40" list="villes" placeholder="Rabat, Paris, Casablanca…" />
     <datalist id="villes">${VILLES.map(([n]) => `<option value="${n}">`).join("")}</datalist>
     <label>Ton monument</label>
-    <div class="choix" id="p-mon">${Object.entries(MONUMENTS).map(([k, v]) => `<button type="button" data-m="${k}">${svgMonument(k)}${v.nom}</button>`).join("")}</div>
+    <div class="choix" id="p-mon">${Object.entries(MONUMENTS).sort(([a], [b]) => RABAT.indexOf(b) - RABAT.indexOf(a)).map(([k, v]) => `<button type="button" data-m="${k}">${svgMonument(k)}${v.nom}</button>`).join("")}</div>
     <button class="btn">C'est parti</button>
     <button type="button" class="annuler">Plus tard</button>
   </form>`;
   document.body.appendChild(m);
   const nomIn = m.querySelector("#p-nom"), villeIn = m.querySelector("#p-ville");
   nomIn.value = actuel.surnom || ""; villeIn.value = actuel.lieu?.ville || "";
+  const apercu = () => { const a = m.querySelector("#p-apercu"); a.innerHTML = photo ? `<img src="${photo}" alt="">` : "📷"; };
+  apercu();
+  m.querySelector("#p-photo").onchange = async (e) => {
+    const f = e.target.files?.[0]; if (!f) return;
+    try { photo = await photoReduite(f); apercu(); } catch { toast("Cette image n'a pas pu être lue."); }
+  };
   const marquer = () => m.querySelectorAll("#p-mon button").forEach((b) => b.classList.toggle("on", b.dataset.m === monument));
   marquer();
   villeIn.oninput = () => { const v = villeConnue(villeIn.value); if (v) { monument = v[2]; marquer(); } };
@@ -380,7 +475,7 @@ function fenetreProfil(premiereFois) {
       tz: connue ? connue[1] : Intl.DateTimeFormat().resolvedOptions().timeZone,
       monument: monument || (connue ? connue[2] : "ville"),
     } : null;
-    ecrireMoi((x) => { x.surnom = surnom; if (lieu) x.lieu = lieu; else delete x.lieu; });
+    ecrireMoi((x) => { x.surnom = surnom; if (photo) x.photo = photo; if (lieu) x.lieu = lieu; else delete x.lieu; });
     m.remove();
   };
 }
