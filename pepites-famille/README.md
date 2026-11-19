@@ -12,13 +12,13 @@ ce qu'elle a appris). C'est la version à utiliser en premier.
 `server.js` + `public/` est une version locale (Node) qu'on peut garder pour
 plus tard, par exemple pour un hébergement indépendant.
 
-## Ce que fait la v0
+## Ce que fait la version en ligne
 
-- **Aujourd'hui** : chaque jour, 3 pépites partagées par les autres membres de la famille, que tu n'as pas encore apprises. Tu cliques sur « J'ai appris ! » et tu gagnes une série 🔥 de jours consécutifs.
-- **Partager** : tu écris une pépite (catégorie, titre, texte) que toute la famille verra.
-- **Tout** : l'historique de toutes les pépites, avec un filtre par catégorie.
-- Réactions ❤️ 🤯 😂 🙏, et on voit qui a appris quoi.
-- Pas de compte : chacun tape son prénom à la première visite.
+- Un fil d'observations de la vie, sans catégorie : du texte, et un lien si on veut (les liens écrits dans le texte deviennent cliquables aussi).
+- **À découvrir** : les pépites des autres que tu n'as pas encore lues. « J'ai appris ✦ » fait grimper ta série 🔥.
+- Une grande horloge, et la famille en haut : chacun indique sa ville, avec son monument (Tour Eiffel pour Paris…) et son heure locale.
+- Chaque pépite est une carte postale avec le tampon de la ville d'où elle a été écrite.
+- Photo de fond : Unsplash (licence Unsplash, usage libre).
 
 ## Lancer
 
