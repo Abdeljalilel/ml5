@@ -156,6 +156,11 @@
   .vocal-pris button { border: 0; background: none; cursor: pointer; color: var(--doux); margin-left: 4px; }
   .vocal-aide { font-size: .78rem; color: var(--doux); width: 100%; margin: 2px 4px 0; }
   .ecoute { display: inline-flex; align-items: center; gap: 8px; margin-top: 12px; padding: 9px 16px; border-radius: 999px; border: 0; cursor: pointer; font: inherit; font-weight: 600; color: #fff; background: linear-gradient(135deg, var(--rose), var(--violet)); }
+  .photo-pepite { display: block; width: calc(100% - 72px); max-height: 420px; object-fit: cover; border-radius: 14px; margin-top: 12px; cursor: zoom-in; background: #f1e6d4; }
+  .photo-attente { width: calc(100% - 72px); aspect-ratio: 4 / 3; border-radius: 14px; margin-top: 12px; background: linear-gradient(90deg, #f1e6d4, #f8efe2, #f1e6d4); }
+  .apercu-photo { width: 44px; height: 44px; object-fit: cover; border-radius: 10px; vertical-align: middle; margin-right: 6px; }
+  .visionneuse { position: fixed; inset: 0; z-index: 40; background: rgba(10,8,20,.92); display: flex; align-items: center; justify-content: center; padding: 16px; cursor: zoom-out; }
+  .visionneuse img { max-width: 100%; max-height: 100%; border-radius: 10px; }
   .carte audio { width: calc(100% - 72px); margin-top: 12px; display: block; }
   .sign { margin-top: 14px; font-size: .86rem; color: var(--doux); }
   .sign b { color: var(--encre); }
@@ -217,6 +222,11 @@
       <textarea id="texte" maxlength="2000" placeholder="Une anecdote, une découverte, une erreur, un souvenir, une réflexion… Même quelque chose de tout simple."></textarea>
     </label>
     <div class="compteur" id="compteur"></div>
+    <div class="vocal-zone">
+      <label class="vocal-btn" for="photoFichier">📷 Ajouter une photo</label>
+      <input id="photoFichier" type="file" accept="image/*" hidden />
+      <span id="photoPrise"></span>
+    </div>
     <div class="vocal-zone">
       <label class="vocal-btn" for="vocalFichier">🎙️ Joindre une note vocale</label>
       <input id="vocalFichier" type="file" accept="audio/*,.m4a,.mp3,.aac,.wav,.ogg,.webm,.mp4" hidden />
@@ -507,7 +517,7 @@ const CATALOGUE = {
 const S = {
   enLigne: new Set(),
   db: null, user: null, uid: null, canWrite: true,
-  pepites: [], actions: {}, noms: {}, commentaires: [], brouillons: {}, reponses: [], questions: [], questionsOuvertes: new Set(), passagePrecedent: null, nouveautesFermees: false, vocal: null, ouvertsVocaux: new Set(),
+  pepites: [], actions: {}, noms: {}, commentaires: [], brouillons: {}, reponses: [], questions: [], questionsOuvertes: new Set(), passagePrecedent: null, nouveautesFermees: false, vocal: null, photo: null, ouvertsVocaux: new Set(),
   charge: false, lent: false, erreur: null, onglet: "fil",
 };
 const $ = (s) => document.querySelector(s);
@@ -668,6 +678,7 @@ function carte(p) {
         <div style="display:flex;gap:8px;margin-top:8px"><button class="btn" style="flex:1">Enregistrer</button><button type="button" class="ouvrir" data-annuleredit="1">Annuler</button></div>
       </form>`
       : p.texte ? `<p class="texte">${avecLiens(p.texte)}</p>` : ""}
+    ${blocPhoto(p)}
     ${p.vocal ? (S.ouvertsVocaux.has(p.id) && cacheVocal[p.vocal.id]
       ? `<audio controls preload="auto" data-vocal="${esc(p.id)}" src="${cacheVocal[p.vocal.id]}"></audio>`
       : `<button class="ecoute" data-ecoute="${esc(p.id)}">▶︎ Écouter la note vocale${p.vocal.duree ? " · " + fmtDuree(p.vocal.duree) : ""}</button>`) : ""}
@@ -840,11 +851,17 @@ $("#ecrire").onsubmit = async (e) => {
   try {
     const lieu = moi().lieu;
     const vocal = S.vocal ? await envoyerVocal(S.vocal) : null;
+    let photo = null;
+    if (S.photo) {
+      const pid = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+      await S.db.doc("photos/" + pid).set({ d: S.photo.d, auteur: S.uid });
+      photo = { id: pid, l: S.photo.l, h: S.photo.h };
+    }
     await S.db.collection("pepites").add({
       texte: texte.slice(0, 2000), lien: lien || "", auteur: S.uid, date: new Date().toISOString(),
-      lieu: lieu ? { ville: lieu.ville, monument: lieu.monument } : null, vocal,
+      lieu: lieu ? { ville: lieu.ville, monument: lieu.monument } : null, vocal, photo,
     });
-    $("#texte").value = ""; $("#lienSaisi").value = ""; S.vocal = null; $("#vocalFichier").value = ""; majVocalPris();
+    $("#texte").value = ""; $("#lienSaisi").value = ""; S.vocal = null; $("#vocalFichier").value = ""; majVocalPris(); S.photo = null; $("#photoFichier").value = ""; majPhotoPrise();
     toast("Pépite transmise ✦ +3 ⭐"); S.onglet = "fil"; render();
   } catch (err) {
     if (err?.code === "invalid_argument") { S.canWrite = false; render(); }
@@ -898,6 +915,65 @@ async function envoyerVocal(v) {
   }
   return { id, parts: n, type: /^audio\/|^video\//.test(v.type) ? v.type : "audio/mp4", duree: Math.round(v.duree || 0) };
 }
+// ---------- Photos ----------
+// Compressée dans le navigateur, rangée dans photos/<id> (un document par photo)
+const PHOTO_MAX_CAR = 230000;
+const photoOk = (d) => typeof d === "string" && /^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(d);
+function compresserPhoto(fichier) {
+  return new Promise((ok, ko) => {
+    const img = new Image(), url = URL.createObjectURL(fichier);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let cote = 1280, qualite = 0.8, d = "", l = 0, h = 0;
+      for (let essai = 0; essai < 8; essai++) {
+        const r = Math.min(1, cote / Math.max(img.width, img.height));
+        l = Math.round(img.width * r); h = Math.round(img.height * r);
+        const c = document.createElement("canvas"); c.width = l; c.height = h;
+        c.getContext("2d").drawImage(img, 0, 0, l, h);
+        d = c.toDataURL("image/jpeg", qualite);
+        if (d.length <= PHOTO_MAX_CAR) break;
+        if (qualite > 0.55) qualite -= 0.1; else cote = Math.round(cote * 0.8);
+      }
+      d.length <= PHOTO_MAX_CAR ? ok({ d, l, h }) : ko(new Error("trop lourde"));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); ko(new Error("illisible")); };
+    img.src = url;
+  });
+}
+function majPhotoPrise() {
+  $("#photoPrise").innerHTML = S.photo ? `<span class="vocal-pris"><img class="apercu-photo" src="${S.photo.d}" alt="">Photo prête<button type="button" id="photoRetirer" title="Retirer">✕</button></span>` : "";
+  const r = $("#photoRetirer"); if (r) r.onclick = () => { S.photo = null; $("#photoFichier").value = ""; majPhotoPrise(); };
+}
+$("#photoFichier").addEventListener("change", async (e) => {
+  const f = e.target.files?.[0]; if (!f) return;
+  try { S.photo = await compresserPhoto(f); majPhotoPrise(); }
+  catch { toast("Cette photo n'a pas pu être lue 🙏"); e.target.value = ""; }
+});
+const cachePhoto = {}, photosEnCours = new Set();
+async function chargerPhoto(id) {
+  if (cachePhoto[id] || photosEnCours.has(id) || !/^[\w]+$/.test(id) || !S.db) return;
+  photosEnCours.add(id);
+  try {
+    const snap = await S.db.doc("photos/" + id).get();
+    const d = snap.exists ? snap.data().d : null;
+    cachePhoto[id] = photoOk(d) ? d : "absente";
+  } catch { cachePhoto[id] = "absente"; }
+  photosEnCours.delete(id); render();
+}
+function blocPhoto(p) {
+  const id = p.photo?.id; if (!id || !/^[\w]+$/.test(id)) return "";
+  const d = cachePhoto[id];
+  if (!d) { setTimeout(() => chargerPhoto(id), 0); return `<div class="photo-attente"></div>`; }
+  if (d === "absente") return "";
+  return `<img class="photo-pepite" src="${d}" alt="Photo partagée par ${esc(nom(p.auteur))}" data-zoom="${esc(id)}" />`;
+}
+document.addEventListener("click", (e) => {
+  const img = e.target.closest?.("img[data-zoom]"); if (!img) return;
+  const v = document.createElement("div"); v.className = "visionneuse";
+  v.innerHTML = `<img src="${img.getAttribute("src")}" alt="">`;
+  v.onclick = () => v.remove(); document.body.appendChild(v);
+});
+
 const cacheVocal = {};
 async function ecouter(btn) {
   const p = S.pepites.find((x) => x.id === btn.dataset.ecoute); const v = p?.vocal;
@@ -1058,6 +1134,7 @@ document.addEventListener("click", async (e) => {
       try {
         const p = S.pepites.find((x) => x.id === t.dataset.del);
         await S.db.doc("pepites/" + t.dataset.del).delete(); toast("Pépite supprimée");
+        if (p?.photo?.id && /^[\w]+$/.test(p.photo.id)) await S.db.doc("photos/" + p.photo.id).delete().catch(() => {});
         if (p?.vocal?.id && /^[\w]+$/.test(p.vocal.id)) for (let i = 0; i < Math.min(p.vocal.parts || 0, 40); i++) await S.db.doc(`vocaux/${p.vocal.id}-${i}`).delete().catch(() => {});
       } catch { toast("Pas pu supprimer."); }
     } else { t.dataset.confirm = "1"; t.textContent = "Confirmer ?"; }
