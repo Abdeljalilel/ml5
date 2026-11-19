@@ -1,0 +1,44 @@
+{
+  "pepites": [
+    {
+      "id": "seed-1",
+      "titre": "La règle des 50 / 30 / 20",
+      "contenu": "Une façon simple de gérer son budget : 50 % pour les besoins (loyer, courses), 30 % pour les envies, 20 % pour l'épargne. Commence par mettre les 20 % de côté dès que le salaire tombe.",
+      "categorie": "finance",
+      "auteur": "Exemple",
+      "date": "2026-11-18T08:00:00.000Z",
+      "reactions": {},
+      "apprisPar": []
+    },
+    {
+      "id": "seed-2",
+      "titre": "Les pieuvres ont trois cœurs",
+      "contenu": "Deux cœurs pompent le sang vers les branchies, le troisième vers le reste du corps. Et leur sang est bleu, car il contient du cuivre au lieu du fer.",
+      "categorie": "culture",
+      "auteur": "Exemple",
+      "date": "2026-11-18T08:00:00.000Z",
+      "reactions": {},
+      "apprisPar": []
+    },
+    {
+      "id": "seed-3",
+      "titre": "Ne jamais répondre à chaud",
+      "contenu": "Quand un message t'énerve, attends le lendemain pour répondre. Neuf fois sur dix, ta réponse sera plus juste, et parfois tu n'auras même plus besoin de répondre.",
+      "categorie": "experience",
+      "auteur": "Exemple",
+      "date": "2026-11-18T08:00:00.000Z",
+      "reactions": {},
+      "apprisPar": []
+    },
+    {
+      "id": "seed-4",
+      "titre": "Musées gratuits le 1er dimanche du mois",
+      "contenu": "Beaucoup de musées nationaux en France sont gratuits le premier dimanche du mois (vérifie sur le site du musée avant d'y aller, certains ne le font que l'hiver).",
+      "categorie": "bonplan",
+      "auteur": "Exemple",
+      "date": "2026-11-18T08:00:00.000Z",
+      "reactions": {},
+      "apprisPar": []
+    }
+  ]
+}

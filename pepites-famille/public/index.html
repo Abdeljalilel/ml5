@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pépites de Famille</title>
+<style>
+  :root {
+    --bg: #fbf7f1; --card: #fff; --ink: #2b2420; --muted: #8a7f76; --line: #ece4da;
+    --accent: #d9822b; --accent-soft: #fbe9d6;
+    --culture: #3b82c4; --experience: #9b59b6; --bonplan: #2e9e6a; --finance: #c9a227; --autre: #8a7f76;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--ink); }
+  header { padding: 20px 20px 8px; max-width: 640px; margin: 0 auto; }
+  h1 { margin: 0; font-size: 1.5rem; }
+  .sub { color: var(--muted); margin: 4px 0 0; font-size: .95rem; }
+  .moi { float: right; font-size: .85rem; color: var(--muted); cursor: pointer; padding-top: 6px; }
+  nav { display: flex; gap: 6px; max-width: 640px; margin: 12px auto 0; padding: 0 20px; }
+  nav button { flex: 1; padding: 10px; border: 1px solid var(--line); background: var(--card); border-radius: 10px; font-size: .95rem; cursor: pointer; color: var(--ink); }
+  nav button.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+  main { max-width: 640px; margin: 0 auto; padding: 16px 20px 60px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin-bottom: 14px; }
+  .tag { display: inline-block; font-size: .75rem; font-weight: 600; padding: 3px 8px; border-radius: 999px; color: #fff; }
+  .card h3 { margin: 10px 0 6px; font-size: 1.1rem; }
+  .card p { margin: 0; line-height: 1.5; white-space: pre-wrap; }
+  .meta { color: var(--muted); font-size: .8rem; margin-top: 10px; }
+  .actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
+  .actions button { border: 1px solid var(--line); background: var(--bg); border-radius: 999px; padding: 6px 10px; cursor: pointer; font-size: .9rem; color: var(--ink); }
+  .actions button.mine { background: var(--accent-soft); border-color: var(--accent); }
+  .actions .learn { margin-left: auto; background: var(--accent); color: #fff; border-color: var(--accent); }
+  .actions .learn.done { background: var(--bonplan); border-color: var(--bonplan); }
+  .hero { background: var(--accent-soft); border-radius: 14px; padding: 14px 16px; margin-bottom: 16px; }
+  .hero b { font-size: 1.05rem; }
+  .empty { text-align: center; color: var(--muted); padding: 30px 10px; }
+  label { display: block; font-weight: 600; margin: 12px 0 6px; font-size: .9rem; }
+  input, textarea, select { width: 100%; padding: 10px; border: 1px solid var(--line); border-radius: 10px; font: inherit; background: #fff; }
+  textarea { min-height: 120px; resize: vertical; }
+  .primary { margin-top: 16px; width: 100%; padding: 12px; border: 0; border-radius: 10px; background: var(--accent); color: #fff; font-size: 1rem; font-weight: 600; cursor: pointer; }
+  .filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+  .filters button { border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: 5px 10px; cursor: pointer; font-size: .85rem; }
+  .filters button.on { background: var(--ink); color: #fff; }
+  .modal { position: fixed; inset: 0; background: rgba(0,0,0,.4); display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .modal .card { width: 100%; max-width: 380px; }
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 10px 16px; border-radius: 999px; font-size: .9rem; }
+</style>
+</head>
+<body>
+<header>
+  <span class="moi" id="moi" title="Changer de prénom"></span>
+  <h1>✨ Pépites de Famille</h1>
+  <p class="sub">Chaque jour, on apprend quelque chose les uns des autres.</p>
+</header>
+<nav>
+  <button data-tab="jour" class="on">☀️ Aujourd'hui</button>
+  <button data-tab="partager">✍️ Partager</button>
+  <button data-tab="tout">📚 Tout</button>
+</nav>
+<main id="app"></main>
+
+<script>
+const CATS = {
+  culture:    { label: "Culture G",        emoji: "🌍" },
+  experience: { label: "Expérience de vie", emoji: "🧭" },
+  bonplan:    { label: "Bon plan",          emoji: "💡" },
+  finance:    { label: "Finance",           emoji: "💰" },
+  autre:      { label: "Autre",             emoji: "🎁" },
+};
+const EMOJIS = ["❤️", "🤯", "😂", "🙏"];
+const PAR_JOUR = 3; // nombre de pépites à découvrir chaque jour
+
+let pepites = [];
+let onglet = "jour";
+let filtre = null;
+let moi = localStorage.getItem("moi");
+
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const today = () => new Date().toISOString().slice(0, 10);
+
+async function api(path, body) {
+  const r = await fetch("/api" + path, body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : {});
+  if (!r.ok) throw new Error((await r.json()).error || "Erreur");
+  return r.json();
+}
+function toast(msg) {
+  const t = document.createElement("div");
+  t.className = "toast"; t.textContent = msg;
+  document.body.appendChild(t); setTimeout(() => t.remove(), 2200);
+}
+
+// Petit hash pour un tirage "aléatoire" mais stable sur la journée
+function hash(s) { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) | 0; return h; }
+
+// Sélection du jour : pépites que je n'ai pas écrites, d'abord celles pas encore apprises,
+// mélangées de façon stable pour la journée. Le tirage est mémorisé pour ne pas bouger.
+function pepitesDuJour() {
+  const key = "jour:" + moi + ":" + today();
+  let ids = JSON.parse(localStorage.getItem(key) || "null");
+  if (!ids) {
+    ids = pepites
+      .filter((p) => p.auteur !== moi && !p.apprisPar.includes(moi))
+      .sort((a, b) => hash(a.id + today()) - hash(b.id + today()))
+      .slice(0, PAR_JOUR)
+      .map((p) => p.id);
+    if (ids.length) localStorage.setItem(key, JSON.stringify(ids));
+  }
+  return ids.map((id) => pepites.find((p) => p.id === id)).filter(Boolean);
+}
+
+// Série de jours consécutifs où j'ai appris au moins une pépite
+function serie() {
+  const jours = new Set(JSON.parse(localStorage.getItem("jours:" + moi) || "[]"));
+  let n = 0; const d = new Date();
+  if (!jours.has(d.toISOString().slice(0, 10))) d.setDate(d.getDate() - 1);
+  while (jours.has(d.toISOString().slice(0, 10))) { n++; d.setDate(d.getDate() - 1); }
+  return n;
+}
+function noterJour() {
+  const k = "jours:" + moi;
+  const jours = new Set(JSON.parse(localStorage.getItem(k) || "[]"));
+  jours.add(today()); localStorage.setItem(k, JSON.stringify([...jours]));
+}
+
+function carte(p) {
+  const c = CATS[p.categorie] || CATS.autre;
+  const appris = p.apprisPar.includes(moi);
+  const reacts = EMOJIS.map((e) => {
+    const l = p.reactions[e] || [];
+    return `<button data-react="${e}" data-id="${p.id}" class="${l.includes(moi) ? "mine" : ""}" title="${esc(l.join(", "))}">${e} ${l.length || ""}</button>`;
+  }).join("");
+  const qui = p.apprisPar.length ? ` · appris par ${esc(p.apprisPar.join(", "))}` : "";
+  return `<div class="card">
+    <span class="tag" style="background:var(--${p.categorie})">${c.emoji} ${c.label}</span>
+    <h3>${esc(p.titre)}</h3>
+    <p>${esc(p.contenu)}</p>
+    <div class="meta">Partagé par <b>${esc(p.auteur)}</b> · ${new Date(p.date).toLocaleDateString("fr-FR")}${qui}</div>
+    <div class="actions">${reacts}
+      ${p.auteur === moi ? "" : `<button class="learn ${appris ? "done" : ""}" data-learn="${p.id}">${appris ? "✓ Appris" : "J'ai appris !"}</button>`}
+    </div>
+  </div>`;
+}
+
+function render() {
+  $("#moi").textContent = moi ? "👤 " + moi : "";
+  document.querySelectorAll("nav button").forEach((b) => b.classList.toggle("on", b.dataset.tab === onglet));
+  const app = $("#app");
+
+  if (onglet === "jour") {
+    const liste = pepitesDuJour();
+    const faites = liste.filter((p) => p.apprisPar.includes(moi)).length;
+    const s = serie();
+    app.innerHTML = `<div class="hero"><b>Bonjour ${esc(moi)} 👋</b><br>
+        ${liste.length ? `${faites} / ${liste.length} pépites découvertes aujourd'hui` : "Tu as tout découvert !"}
+        ${s ? ` · 🔥 ${s} jour${s > 1 ? "s" : ""} d'affilée` : ""}</div>` +
+      (liste.length ? liste.map(carte).join("")
+        : `<div class="empty">Plus rien de nouveau pour l'instant.<br>C'est le moment de <b>partager une pépite</b> à ta famille ✍️</div>`);
+  }
+
+  if (onglet === "partager") {
+    app.innerHTML = `<div class="card">
+      <label>Catégorie</label>
+      <select id="f-cat">${Object.entries(CATS).map(([k, c]) => `<option value="${k}">${c.emoji} ${c.label}</option>`).join("")}</select>
+      <label>Titre</label>
+      <input id="f-titre" maxlength="120" placeholder="Ex : Toujours négocier son premier salaire" />
+      <label>Ta pépite</label>
+      <textarea id="f-contenu" maxlength="2000" placeholder="Raconte ce que tu as appris, vécu, ou ton bon plan…"></textarea>
+      <button class="primary" id="f-envoyer">Partager avec la famille</button>
+    </div>`;
+    $("#f-envoyer").onclick = async () => {
+      try {
+        const p = await api("/pepites", { categorie: $("#f-cat").value, titre: $("#f-titre").value, contenu: $("#f-contenu").value, auteur: moi });
+        pepites.push(p); toast("Pépite partagée 🎉"); onglet = "tout"; render();
+      } catch (e) { toast(e.message); }
+    };
+  }
+
+  if (onglet === "tout") {
+    const liste = pepites.filter((p) => !filtre || p.categorie === filtre).slice().reverse();
+    app.innerHTML = `<div class="filters">
+        <button class="${!filtre ? "on" : ""}" data-filtre="">Tout (${pepites.length})</button>
+        ${Object.entries(CATS).map(([k, c]) => `<button class="${filtre === k ? "on" : ""}" data-filtre="${k}">${c.emoji} ${c.label}</button>`).join("")}
+      </div>` + (liste.length ? liste.map(carte).join("") : `<div class="empty">Rien ici pour l'instant.</div>`);
+  }
+}
+
+function majPepite(p) { pepites = pepites.map((x) => (x.id === p.id ? p : x)); render(); }
+
+document.addEventListener("click", async (e) => {
+  const t = e.target.closest("button"); if (!t) return;
+  if (t.dataset.tab) { onglet = t.dataset.tab; render(); }
+  if (t.dataset.filtre !== undefined) { filtre = t.dataset.filtre || null; render(); }
+  if (t.dataset.react) majPepite(await api(`/pepites/${t.dataset.id}/reaction`, { qui: moi, emoji: t.dataset.react }));
+  if (t.dataset.learn) { noterJour(); majPepite(await api(`/pepites/${t.dataset.learn}/appris`, { qui: moi })); }
+});
+$("#moi").onclick = demanderPrenom;
+
+function demanderPrenom() {
+  const m = document.createElement("div");
+  m.className = "modal";
+  m.innerHTML = `<div class="card"><h3>Qui es-tu ? 🙂</h3>
+    <p style="color:var(--muted)">Ton prénom sera affiché sur tes pépites.</p>
+    <input id="m-nom" maxlength="40" placeholder="Ex : Maman, Papa, Sarah…" value="${esc(moi || "")}" />
+    <button class="primary" id="m-ok">C'est parti</button></div>`;
+  document.body.appendChild(m);
+  $("#m-nom").focus();
+  const ok = () => { const v = $("#m-nom").value.trim(); if (!v) return; moi = v; localStorage.setItem("moi", v); m.remove(); render(); };
+  $("#m-ok").onclick = ok;
+  $("#m-nom").onkeydown = (e) => e.key === "Enter" && ok();
+}
+
+(async () => {
+  pepites = await api("/pepites");
+  if (!moi) demanderPrenom(); else render();
+})();
+</script>
+</body>
+</html>
